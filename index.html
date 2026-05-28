@@ -144,7 +144,7 @@ var LEVELS={
     {pos:[5,1,1],chain:'A',level:1},{pos:[5,3,1],chain:'A',level:1},{pos:[5,5,1],chain:'C',level:3},{pos:[5,7,1],chain:'B',level:1},
     {pos:[2,2,2],chain:'A',level:1},{pos:[2,4,2],chain:'A',level:1},{pos:[2,6,2],chain:'B',level:1},{pos:[4,2,2],chain:'A',level:1},
     {pos:[4,4,2],chain:'A',level:1},{pos:[4,6,2],chain:'B',level:1}]},
-2:{name:'第二关',diff:'挑战',diffCls:'diff-hard',chains:{A:6,B:6,C:6,D:6,E:6,F:6},boardW:26,boardH:26,unit:20,
+2:{name:'第二关',diff:'挑战',diffCls:'diff-hard',chains:{A:6,B:6,C:6,D:6,E:6,F:6},boardW:26,boardH:26,unit:32,
   desc:'6条合成链 | 满级6级 | 55张牌',
   cards:[
       {pos:[11,11,1],chain:'F',level:4},
@@ -255,7 +255,7 @@ function renderAll(){
     el.style.width=CARD_W+'px';el.style.height=CARD_H+'px';
     el.innerHTML=buildCardHTML(card.chain,card.level);
     el.style.left=((card.pos[0]-1)*UNIT)+'px';el.style.top=((card.pos[1]-1)*UNIT)+'px';
-    el.style.zIndex=card.pos[2]*10000+card.pos[1]*100+card.id;
+    el.style.zIndex=card.pos[2]*10000+card.pos[1]*100+(99-card.pos[0]);
     el.addEventListener('mousedown',onDown);el.addEventListener('touchstart',onDown,{passive:false});
     board.appendChild(el);card.el=el;
   });
