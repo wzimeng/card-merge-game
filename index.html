@@ -76,6 +76,10 @@ body{font-family:'Microsoft YaHei','PingFang SC',sans-serif;overflow:hidden;touc
 .flying{animation:flyToProgress 0.9s cubic-bezier(0.25,0.46,0.45,0.94) forwards;pointer-events:none;z-index:999999!important}
 @keyframes maxLevelGlow{0%{box-shadow:0 0 0 0 rgba(255,215,0,0.9)}50%{box-shadow:0 0 25px 12px rgba(255,215,0,0.5)}100%{box-shadow:0 0 15px 8px rgba(255,215,0,0.3)}}
 .max-level-glow{animation:maxLevelGlow 0.5s ease-out forwards}
+@keyframes hintPulse{0%,100%{box-shadow:0 0 8px 4px rgba(255,215,0,0.8)}50%{box-shadow:0 0 16px 8px rgba(255,215,0,0.4)}}
+.hint-src{animation:hintPulse 1s ease-in-out infinite;outline:3px solid #ffd700;outline-offset:2px;z-index:99990!important}
+.hint-tgt{animation:hintPulse 1s ease-in-out infinite;outline:3px solid #ff6b6b;outline-offset:2px;z-index:99990!important}
+.hint-arrow{position:absolute;font-size:20px;z-index:99991;pointer-events:none;animation:hintPulse 1s ease-in-out infinite}
 
 #toolbar{position:fixed;bottom:0;left:0;right:0;background:linear-gradient(0deg,rgba(0,0,0,0.85),rgba(0,0,0,0.5));display:flex;align-items:center;justify-content:center;gap:10px;padding:10px;z-index:10000;backdrop-filter:blur(8px);border-top:1px solid rgba(255,255,255,0.1)}
 #toolbar.hidden{display:none}
@@ -119,7 +123,7 @@ body{font-family:'Microsoft YaHei','PingFang SC',sans-serif;overflow:hidden;touc
   <button class="tool-btn" onclick="useUndo()">↩ 撤回</button>
   <button class="tool-btn" id="btn-remove" onclick="useRemove()">📤 移出</button>
   <button class="tool-btn" onclick="useShuffle()">🔀 打乱</button>
-  <span id="stash-label">暂存:</span><div id="stash-area"></div>
+  <button class="tool-btn" id="btn-hint" onclick="toggleHint()">💡 攻略</button><span id="stash-label">暂存:</span><div id="stash-area"></div>
 </div>
 <div id="toast"></div>
 <div id="modal"><div class="modal-content"><h2 id="modal-title"></h2><p id="modal-text"></p><div class="modal-btns" id="modal-btns"></div></div></div>
@@ -144,6 +148,8 @@ var LEVELS={
     {pos:[5,1,1],chain:'A',level:1},{pos:[5,3,1],chain:'A',level:1},{pos:[5,5,1],chain:'C',level:3},{pos:[5,7,1],chain:'B',level:1},
     {pos:[2,2,2],chain:'A',level:1},{pos:[2,4,2],chain:'A',level:1},{pos:[2,6,2],chain:'B',level:1},{pos:[4,2,2],chain:'A',level:1},
     {pos:[4,4,2],chain:'A',level:1},{pos:[4,6,2],chain:'B',level:1}]},
+  guide:[
+      {src:[2,2,2],tgt:[2,4,2],chain:'A',level:1},{src:[4,2,2],tgt:[4,4,2],chain:'A',level:1},{src:[5,1,1],tgt:[5,3,1],chain:'A',level:1},{src:[5,3,1],tgt:[1,1,1],chain:'A',level:2},{src:[2,4,2],tgt:[4,4,2],chain:'A',level:2},{src:[4,4,2],tgt:[1,1,1],chain:'A',level:3},{src:[2,6,2],tgt:[4,6,2],chain:'B',level:1},{src:[3,1,1],tgt:[5,7,1],chain:'B',level:1},{src:[4,6,2],tgt:[1,3,1],chain:'B',level:2},{src:[5,7,1],tgt:[3,3,1],chain:'B',level:2},{src:[1,3,1],tgt:[3,3,1],chain:'B',level:3},{src:[1,5,1],tgt:[1,7,1],chain:'C',level:1},{src:[3,5,1],tgt:[3,7,1],chain:'C',level:1},{src:[1,7,1],tgt:[3,7,1],chain:'C',level:2},{src:[3,7,1],tgt:[5,5,1],chain:'C',level:3}],
 2:{name:'第二关',diff:'挑战',diffCls:'diff-hard',chains:{A:6,B:6,C:6,D:6,E:6,F:6},boardW:26,boardH:26,unit:32,
   desc:'6条合成链 | 满级6级 | 55张牌',
   cards:[
@@ -202,7 +208,57 @@ var LEVELS={
       {pos:[10,12,12],chain:'A',level:1},
       {pos:[7,9,9],chain:'A',level:1},
       {pos:[13,6,6],chain:'A',level:1}
-    ]}
+    ]},
+  guide:[
+      {src:[13,6,6],tgt:[13,9,8],chain:'A',level:1},
+      {src:[7,9,9],tgt:[15,8,8],chain:'A',level:1},
+      {src:[10,12,12],tgt:[9,8,3],chain:'A',level:1},
+      {src:[9,11,11],tgt:[13,11,6],chain:'A',level:1},
+      {src:[10,12,10],tgt:[7,10,8],chain:'B',level:1},
+      {src:[5,10,6],tgt:[10,13,6],chain:'D',level:1},
+      {src:[11,11,9],tgt:[15,8,8],chain:'A',level:2},
+      {src:[12,5,5],tgt:[9,8,3],chain:'A',level:2},
+      {src:[14,6,4],tgt:[11,10,8],chain:'B',level:2},
+      {src:[13,9,8],tgt:[13,11,6],chain:'A',level:2},
+      {src:[5,11,5],tgt:[9,11,9],chain:'B',level:2},
+      {src:[12,6,4],tgt:[7,10,8],chain:'B',level:2},
+      {src:[15,8,8],tgt:[5,10,4],chain:'A',level:3},
+      {src:[9,8,3],tgt:[13,11,6],chain:'A',level:3},
+      {src:[11,10,8],tgt:[7,10,8],chain:'B',level:3},
+      {src:[12,9,7],tgt:[13,11,6],chain:'A',level:4},
+      {src:[5,10,4],tgt:[11,8,2],chain:'A',level:4},
+      {src:[13,11,6],tgt:[11,8,2],chain:'A',level:5},
+      {src:[9,11,9],tgt:[16,8,3],chain:'B',level:3},
+      {src:[14,8,7],tgt:[9,8,2],chain:'B',level:3},
+      {src:[7,10,8],tgt:[16,8,3],chain:'B',level:4},
+      {src:[13,7,3],tgt:[9,8,2],chain:'B',level:4},
+      {src:[16,8,3],tgt:[9,8,2],chain:'B',level:5},
+      {src:[14,9,6],tgt:[11,10,6],chain:'C',level:2},
+      {src:[9,10,8],tgt:[15,8,2],chain:'C',level:2},
+      {src:[8,11,7],tgt:[13,6,2],chain:'C',level:2},
+      {src:[7,9,3],tgt:[13,10,5],chain:'C',level:2},
+      {src:[10,13,6],tgt:[5,9,3],chain:'D',level:2},
+      {src:[11,10,6],tgt:[13,6,2],chain:'C',level:3},
+      {src:[15,8,2],tgt:[13,10,5],chain:'C',level:3},
+      {src:[9,11,6],tgt:[5,9,3],chain:'D',level:3},
+      {src:[10,12,5],tgt:[13,10,5],chain:'C',level:4},
+      {src:[13,6,2],tgt:[8,12,3],chain:'C',level:4},
+      {src:[13,10,5],tgt:[8,12,3],chain:'C',level:5},
+      {src:[9,10,3],tgt:[13,9,4],chain:'D',level:3},
+      {src:[10,6,1],tgt:[9,11,2],chain:'D',level:3},
+      {src:[11,10,5],tgt:[14,7,1],chain:'E',level:3},
+      {src:[5,9,3],tgt:[13,9,4],chain:'D',level:4},
+      {src:[6,9,2],tgt:[9,11,2],chain:'D',level:4},
+      {src:[13,9,4],tgt:[9,11,2],chain:'D',level:5},
+      {src:[6,8,1],tgt:[12,7,1],chain:'E',level:3},
+      {src:[11,11,4],tgt:[10,9,1],chain:'F',level:3},
+      {src:[7,10,1],tgt:[9,12,1],chain:'E',level:3},
+      {src:[12,10,3],tgt:[12,7,1],chain:'E',level:4},
+      {src:[12,11,2],tgt:[10,9,1],chain:'F',level:4},
+      {src:[14,7,1],tgt:[9,12,1],chain:'E',level:4},
+      {src:[14,9,1],tgt:[11,11,1],chain:'F',level:4},
+      {src:[12,7,1],tgt:[9,12,1],chain:'E',level:5},
+      {src:[10,9,1],tgt:[11,11,1],chain:'F',level:5}]
 };
 
 var TOTAL_LEVELS=2;
@@ -226,10 +282,10 @@ function startLevel(num){
   board.style.width=(cfg.boardW*UNIT)+'px';board.style.height=(cfg.boardH*UNIT)+'px';
   var id=1;
   cardsData=cfg.cards.map(function(c){return{id:id++,pos:[c.pos[0],c.pos[1],c.pos[2]],chain:c.chain,level:c.level,el:null,locked:false}});
-  stashCards=[];progress=0;historyStack=[];toolMode=null;
+  stashCards=[];progress=0;historyStack=[];toolMode=null;guideStep=0;guideMode=false;
   document.getElementById('menu').classList.add('hidden');document.getElementById('header').classList.remove('hidden');document.getElementById('board-container').classList.remove('hidden');document.getElementById('toolbar').classList.remove('hidden');
   document.getElementById('level-badge').textContent='\u2190 '+cfg.name;
-  saveState();renderAll();recalcLocks();
+  saveState();renderAll();recalcLocks();clearHints();document.getElementById('btn-hint').classList.remove('active');
 }
 
 function getIcon(chain, level) {
@@ -296,6 +352,46 @@ function checkWin(){if(progress>=Object.keys(CHAINS).length){if(currentLevel<TOT
 function showModal(title,text,btns){document.getElementById('modal-title').textContent=title;document.getElementById('modal-text').textContent=text;var bc=document.getElementById('modal-btns');bc.innerHTML='';btns.forEach(function(b){var btn=document.createElement('button');btn.className='modal-btn '+b.cls;btn.textContent=b.text;btn.onclick=b.fn;bc.appendChild(btn)});document.getElementById('modal').classList.add('show')}
 function hideModal(){document.getElementById('modal').classList.remove('show')}
 function showToast(msg,type){toastEl.textContent=msg;toastEl.className=type||'';toastEl.classList.add('show');setTimeout(function(){toastEl.classList.remove('show')},1500)}
+
+var guideMode=false;
+var guideStep=0;
+function toggleHint(){
+  guideMode=!guideMode;
+  document.getElementById("btn-hint").classList.toggle("active",guideMode);
+  if(guideMode){showHint()}else{clearHints();showToast("\u653b\u7565\u5df2\u5173\u95ed","success")}
+}
+function showHint(){
+  clearHints();
+  var cfg=LEVELS[currentLevel];
+  if(!cfg||!cfg.guide){showToast("\u672c\u5173\u65e0\u653b\u7565","error");return}
+  if(guideStep>=cfg.guide.length){showToast("\u653b\u7565\u5df2\u5b8c\u6210\uff01","success");return}
+  var step=cfg.guide[guideStep];
+  var srcCard=null,tgtCard=null;
+  for(var i=0;i<cardsData.length;i++){
+    var c=cardsData[i];
+    if(!srcCard&&c.chain===step.chain&&c.level===step.level&&c.pos[0]===step.src[0]&&c.pos[1]===step.src[1]&&c.pos[2]===step.src[2])srcCard=c;
+    if(!tgtCard&&c.chain===step.chain&&c.level===step.level&&c.pos[0]===step.tgt[0]&&c.pos[1]===step.tgt[1]&&c.pos[2]===step.tgt[2])tgtCard=c;
+  }
+  if(!srcCard||!tgtCard){
+    guideStep++;
+    if(guideStep<cfg.guide.length)showHint();
+    else showToast("\u653b\u7565\u5df2\u5b8c\u6210","success");
+    return
+  }
+  if(srcCard.el)srcCard.el.classList.add("hint-src");
+  if(tgtCard.el)tgtCard.el.classList.add("hint-tgt");
+  var icon=getIcon(step.chain,step.level);
+  showToast("\u62d6\u52a8 "+icon+" \u2192 "+icon+" \u5408\u6210 "+getIcon(step.chain,step.level+1),"success");
+}
+function clearHints(){
+  var els=document.querySelectorAll(".hint-src,.hint-tgt");
+  for(var i=0;i<els.length;i++){els[i].classList.remove("hint-src");els[i].classList.remove("hint-tgt")}
+}
+var origDoMerge=doMerge;
+doMerge=function(src,tgt,ss,ts){
+  origDoMerge(src,tgt,ss,ts);
+  if(guideMode){guideStep++;setTimeout(showHint,1200)}
+};
 </script>
 </body>
 </html>
