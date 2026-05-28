@@ -65,7 +65,7 @@ body{font-family:'Microsoft YaHei','PingFang SC',sans-serif;overflow:hidden;touc
 .card .card-icon{line-height:1}
 .card-lv{font-size:10px;color:#888;margin-top:2px;font-weight:bold;letter-spacing:1px}
 .card.locked{filter:brightness(0.4) saturate(0.6);cursor:not-allowed}
-.card.dragging{cursor:grabbing;z-index:99999!important;box-shadow:0 12px 30px rgba(0,0,0,0.4),0 4px 10px rgba(0,0,0,0.3);transform:scale(1.08) rotate(1deg)}
+.card.dragging{cursor:grabbing;z-index:9999999!important;box-shadow:0 12px 30px rgba(0,0,0,0.4),0 4px 10px rgba(0,0,0,0.3);transform:scale(1.08) rotate(1deg)}
 .chain-A{--back-color:#e74c3c;--chain-color:#c0392b;border-left-color:#e74c3c;border-bottom-color:#c0392b}
 .chain-B{--back-color:#3498db;--chain-color:#2980b9;border-left-color:#3498db;border-bottom-color:#2980b9}
 .chain-C{--back-color:#2ecc71;--chain-color:#27ae60;border-left-color:#2ecc71;border-bottom-color:#27ae60}
@@ -224,7 +224,7 @@ function renderAll(){
     el.style.width=CARD_W+'px';el.style.height=CARD_H+'px';
     el.innerHTML=buildCardHTML(card.chain,card.level);
     el.style.left=((card.pos[0]-1)*UNIT)+'px';el.style.top=((card.pos[1]-1)*UNIT)+'px';
-    el.style.zIndex=card.pos[2]*100+card.id;
+    el.style.zIndex=card.pos[2]*10000+card.pos[1]*100+card.id;
     el.addEventListener('mousedown',onDown);el.addEventListener('touchstart',onDown,{passive:false});
     board.appendChild(el);card.el=el;
   });
@@ -256,7 +256,7 @@ function doMerge(src,tgt,srcStash,tgtStash){saveState();if(srcStash)stashCards=s
 
 function useUndo(){if(historyStack.length<=1){showToast('没有可撤回的操作','error');return}historyStack.pop();var s=historyStack[historyStack.length-1];cardsData=JSON.parse(s.cards);stashCards=JSON.parse(s.stash);progress=s.progress;cardsData.forEach(function(c){c.el=null});stashCards.forEach(function(c){c.el=null});renderAll();recalcLocks();showToast('已撤回','success')}
 function useRemove(){if(toolMode==='remove'){toolMode=null;document.getElementById('btn-remove').classList.remove('active')}else{toolMode='remove';document.getElementById('btn-remove').classList.add('active');showToast('请点击一张已解锁的牌移出','success')}}
-function useShuffle(){saveState();var positions=cardsData.map(function(c){return[c.pos[0],c.pos[1],c.pos[2]]});var ids=cardsData.map(function(c){return{chain:c.chain,level:c.level}});ids.sort(function(a,b){return a.level-b.level});positions.sort(function(a,b){return b[2]-a[2]||Math.random()-0.5});cardsData.forEach(function(c,i){if(ids[i]){c.chain=ids[i].chain;c.level=ids[i].level;c.pos=[positions[i][0],positions[i][1],positions[i][2]]}});renderAll();recalcLocks();showToast('已打乱重排','success')}
+function useShuffle(){saveState();var positions=cardsData.map(function(c){return[c.pos[0],c.pos[1],c.pos[2]]});var ids=cardsData.map(function(c){return{chain:c.chain,level:c.level}});for(var i=ids.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var tmp=ids[i];ids[i]=ids[j];ids[j]=tmp}positions.sort(function(a,b){return b[2]-a[2]||(a[1]-b[1])||(a[0]-b[0])});ids.sort(function(a,b){return a.level-b.level});cardsData.forEach(function(c,i){if(ids[i]){c.chain=ids[i].chain;c.level=ids[i].level;c.pos=[positions[i][0],positions[i][1],positions[i][2]]}});renderAll();recalcLocks();showToast('已打乱重排','success')}
 
 function saveState(){historyStack.push({cards:JSON.stringify(cardsData.map(function(c){return{id:c.id,pos:c.pos,chain:c.chain,level:c.level}})),stash:JSON.stringify(stashCards.map(function(c){return{id:c.id,pos:c.pos,chain:c.chain,level:c.level}})),progress:progress});if(historyStack.length>30)historyStack.shift()}
 function updateProgress(){var total=Object.keys(CHAINS).length;document.getElementById('progress-text').textContent='进度: '+progress+'/'+total;document.getElementById('progress-bar').style.width=(progress/total*100)+'%'}
