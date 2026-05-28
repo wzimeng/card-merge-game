@@ -63,9 +63,7 @@ body{font-family:'Microsoft YaHei','PingFang SC',sans-serif;overflow:hidden;touc
 .card{position:absolute;border-radius:7px;cursor:grab;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:bold;transition:filter 0.25s ease,box-shadow 0.2s;border:1px solid rgba(255,255,255,0.5);border-left-width:4px;border-bottom-width:6px;background:linear-gradient(135deg,#fafafa,#f0f0f0,#e8e8e8);color:#333;box-shadow:0 3px 8px rgba(0,0,0,0.25),0 1px 2px rgba(0,0,0,0.15),inset 0 1px 0 rgba(255,255,255,0.8);z-index:1;will-change:transform}
 .card::before{content:'';position:absolute;top:3px;left:3px;right:3px;bottom:3px;border:1px solid rgba(0,0,0,0.06);border-radius:4px;pointer-events:none}
 .card .card-icon{line-height:1}
-.card .level-dots{display:flex;gap:2px;margin-top:2px}
-.card .level-dot{width:4px;height:4px;border-radius:50%;background:var(--chain-color);opacity:0.3}
-.card .level-dot.active{opacity:1}
+.card-lv{font-size:10px;color:#888;margin-top:2px;font-weight:bold;letter-spacing:1px}
 .card.locked{filter:brightness(0.4) saturate(0.6);cursor:not-allowed}
 .card.dragging{cursor:grabbing;z-index:99999!important;box-shadow:0 12px 30px rgba(0,0,0,0.4),0 4px 10px rgba(0,0,0,0.3);transform:scale(1.08) rotate(1deg)}
 .chain-A{--back-color:#e74c3c;--chain-color:#c0392b;border-left-color:#e74c3c;border-bottom-color:#c0392b}
@@ -89,7 +87,7 @@ body{font-family:'Microsoft YaHei','PingFang SC',sans-serif;overflow:hidden;touc
 #stash-area.highlight{background:rgba(255,215,0,0.15);border-color:rgba(255,215,0,0.4)}
 #stash-area .card{position:relative!important;width:40px!important;height:50px!important;cursor:grab;border-left-width:3px!important;border-bottom-width:4px!important}
 #stash-area .card .card-icon{font-size:16px!important}
-#stash-area .card .level-dots{display:none!important}
+
 #toast{position:fixed;top:75px;left:50%;transform:translateX(-50%) translateY(-10px);background:linear-gradient(180deg,rgba(0,0,0,0.85),rgba(0,0,0,0.7));color:#fff;padding:10px 20px;border-radius:12px;font-size:13px;pointer-events:none;opacity:0;transition:all 0.3s;z-index:100000;border:1px solid rgba(255,255,255,0.15);box-shadow:0 8px 24px rgba(0,0,0,0.3)}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 #toast.success{color:#2ecc71}#toast.error{color:#e74c3c}
@@ -216,15 +214,7 @@ function getIconSize(level, baseUnit) {
   return Math.round(base * scale);
 }
 
-function buildCardHTML(ch, lv) {
-  var icon = getIcon(ch, lv);
-  var iconSize = getIconSize(lv, UNIT);
-  var ml = CHAINS[ch];
-  var d = '';
-  var maxDots = Math.min(ml, 8);
-  for (var i = 1; i <= maxDots; i++) d += '<div class="level-dot' + (i <= lv ? ' active' : '') + '"></div>';
-  return '<div class="card-icon" style="font-size:' + iconSize + 'px">' + icon + '</div><div class="level-dots">' + d + '</div>';
-}
+function buildCardHTML(ch,lv){var icon=getIcon(ch,lv);var sz=getIconSize(lv,UNIT);return '<div class="card-icon" style="font-size:'+sz+'px">'+icon+'</div><div class="card-lv">LV'+lv+'</div>';}
 
 function renderAll(){
   board.innerHTML='';
