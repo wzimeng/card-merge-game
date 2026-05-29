@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>关卡编辑器</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#1a2a1a;font-family:'Microsoft YaHei',sans-serif;color:#eee;min-height:100vh;overflow-x:auto}
+
+/* 顶部初始化区 */
+#init-bar{background:rgba(0,0,0,0.5);padding:12px 20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;border-bottom:2px solid #3a5a3a}
+#init-bar h2{color:#ffd700;font-size:16px;margin-right:8px}
+.init-label{color:#aaa;font-size:13px}
+.init-input{background:#223;border:1px solid #456;color:#fff;padding:4px 8px;border-radius:5px;width:60px;font-size:13px}
+.chain-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.chain-item{display:flex;align-items:center;gap:4px;background:rgba(255,255,255,0.07);padding:4px 8px;border-radius:6px}
+.chain-item label{font-size:12px;color:#aaa}
+.chain-item input{width:45px;background:#223;border:1px solid #456;color:#fff;padding:3px 5px;border-radius:4px;font-size:12px}
+#btn-confirm{padding:8px 20px;border:none;border-radius:8px;background:linear-gradient(180deg,#ffd700,#e6a000);color:#222;font-size:14px;font-weight:bold;cursor:pointer}
+#btn-confirm:hover{filter:brightness(1.1)}
+.chain-name-input{width:32px;background:#223;border:1px solid #456;color:#fff;padding:3px 5px;border-radius:4px;font-size:12px;text-align:center}
+
+/* 主区域 */
+#main{display:flex;gap:16px;padding:16px;align-items:flex-start}
+
+/* 左侧：待放区 + 棋盘 */
+#left-panel{display:flex;flex-direction:column;gap:12px}
+
+/* 待放区 */
+#staging-area{background:rgba(0,0,0,0.3);border:2px dashed #3a5a3a;border-radius:10px;padding:10px;min-height:70px}
+#staging-area h3{font-size:13px;color:#888;margin-bottom:8px}
+#staging-cards{display:flex;flex-wrap:wrap;gap:8px;min-height:40px}
+
+/* 棋盘容器 */
+#board-wrap{position:relative}
+#board-canvas{display:block;cursor:crosshair}
+/* 悬浮提示 */
+#hover-hint{position:absolute;background:rgba(255,215,0,0.15);border:2px dashed #ffd700;border-radius:5px;pointer-events:none;display:none;transition:none}
+/* 持牌时显示的牌 */
+#held-card-el{position:fixed;pointer-events:none;z-index:99999;display:none;transform:translate(-50%,-50%)}
+
+/* 卡牌样式 */
+.card-el{
+  position:absolute;
+  border-radius:6px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  font-weight:bold;cursor:pointer;
+  border:1px solid rgba(255,255,255,0.4);
+  border-left-width:4px;border-bottom-width:6px;
+  background:linear-gradient(135deg,#fafafa,#f0f0f0,#e8e8e8);
+  color:#333;
+  box-shadow:0 2px 6px rgba(0,0,0,0.3);
+  user-select:none;
+}
+.card-el.dimmed{filter:brightness(0.4) saturate(0.5);cursor:not-allowed}
+.card-el.in-staging{position:relative;width:60px;height:72px;cursor:pointer;flex-shrink:0}
+.card-el .c-icon{font-size:22px;line-height:1}
+.card-el .c-lv{font-size:10px;color:#666;margin-top:2px}
+.chain-A{--bc:#e74c3c;--cc:#c0392b;border-left-color:#e74c3c;border-bottom-color:#c0392b}
+.chain-B{--bc:#3498db;--cc:#2980b9;border-left-color:#3498db;border-bottom-color:#2980b9}
+.chain-C{--bc:#2ecc71;--cc:#27ae60;border-left-color:#2ecc71;border-bottom-color:#27ae60}
+.chain-D{--bc:#9b59b6;--cc:#8e44ad;border-left-color:#9b59b6;border-bottom-color:#8e44ad}
+.chain-E{--bc:#e67e22;--cc:#d35400;border-left-color:#e67e22;border-bottom-color:#d35400}
+.chain-F{--bc:#1abc9c;--cc:#16a085;border-left-color:#1abc9c;border-bottom-color:#16a085}
+.chain-G{--bc:#e91e63;--cc:#c2185b;border-left-color:#e91e63;border-bottom-color:#c2185b}
+.chain-H{--bc:#ff9800;--cc:#e65100;border-left-color:#ff9800;border-bottom-color:#e65100}
+
+/* 右侧配置面板 */
+#right-panel{flex:1;min-width:320px;max-width:500px;background:rgba(0,0,0,0.3);border-radius:10px;border:1px solid #3a5a3a;padding:14px}
+#right-panel h3{font-size:14px;color:#ffd700;margin-bottom:10px;display:flex;align-items:center;gap:10px}
+.copy-btns{display:flex;gap:8px;margin-left:auto}
+.copy-btn{padding:4px 12px;border:1px solid #456;background:rgba(255,255,255,0.08);color:#ccc;border-radius:6px;cursor:pointer;font-size:12px}
+.copy-btn:hover{background:rgba(255,255,255,0.15);color:#fff}
+
+#config-table{width:100%;border-collapse:collapse;font-size:12px}
+#config-table th{background:rgba(50,80,130,0.6);padding:6px 8px;text-align:left;color:#bcd}
+#config-table td{padding:5px 8px;border-bottom:1px solid rgba(255,255,255,0.06)}
+#config-table tr:hover td{background:rgba(255,255,255,0.04)}
+#config-table .td-icon{font-size:16px;text-align:center}
+#config-summary{margin-top:10px;font-size:12px;color:#888;padding-top:8px;border-top:1px solid #333}
+
+/* 弹窗提示 */
+#toast{position:fixed;top:80px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.85);color:#fff;padding:10px 20px;border-radius:10px;font-size:13px;opacity:0;transition:opacity 0.3s;pointer-events:none;z-index:200000;border:1px solid rgba(255,255,255,0.1)}
+#toast.show{opacity:1}
+#toast.err{color:#ff6b6b}
+#toast.ok{color:#2ecc71}
+
+/* 右键菜单 */
+#ctx-menu{position:fixed;background:#1e2e1e;border:1px solid #3a5a3a;border-radius:8px;padding:4px 0;z-index:100000;display:none;min-width:120px;box-shadow:0 4px 16px rgba(0,0,0,0.5)}
+#ctx-menu div{padding:8px 16px;cursor:pointer;font-size:13px;color:#ccc}
+#ctx-menu div:hover{background:rgba(255,255,255,0.1);color:#fff}
+#ctx-menu .danger{color:#ff6b6b}
+</style>
+</head>
+<body>
+
+<!-- 顶部初始化 -->
+<div id="init-bar">
+  <h2>⚙ 关卡编辑器</h2>
+  <span class="init-label">合成链数量:</span>
+  <input class="init-input" id="num-chains" type="number" min="1" max="8" value="3">
+  <span class="init-label">满级等级:</span>
+  <input class="init-input" id="max-level" type="number" min="2" max="8" value="4">
+  <button id="btn-confirm" onclick="initChains()">确认生成</button>
+  <span id="chain-names-row" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"></span>
+</div>
+
+<!-- 主区域 -->
+<div id="main">
+  <div id="left-panel">
+    <!-- 待放区 -->
+    <div id="staging-area">
+      <h3>待放入卡牌（点击拿起）</h3>
+      <div id="staging-cards"></div>
+    </div>
+    <!-- 棋盘 -->
+    <div id="board-wrap">
+      <canvas id="board-canvas"></canvas>
+      <div id="hover-hint"></div>
+    </div>
+  </div>
+
+  <!-- 右侧配置 -->
+  <div id="right-panel">
+    <h3>
+      关卡配置
+      <div class="copy-btns">
+        <button class="copy-btn" onclick="copyTable()">复制表格</button>
+        <button class="copy-btn" onclick="copyJSON()">复制JSON</button>
+      </div>
+    </h3>
+    <table id="config-table">
+      <thead>
+        <tr><th>图案</th><th>链</th><th>等级</th><th>X</th><th>Y</th><th>Z</th></tr>
+      </thead>
+      <tbody id="config-tbody"></tbody>
+    </table>
+    <div id="config-summary">共 0 张牌</div>
+  </div>
+</div>
+
+<!-- 持牌显示 -->
+<div id="held-card-el" class="card-el"></div>
+<!-- Toast -->
+<div id="toast"></div>
+<!-- 右键菜单 -->
+<div id="ctx-menu">
+  <div onclick="ctxSplit()">✂ 分割此牌</div>
+  <div onclick="ctxRemove()" class="danger">🗑 移回待放区</div>
+  <div onclick="closeCtx()">取消</div>
+</div>
+
+<script>
+// ============ 配置 ============
+const CELL = 44;      // 每格像素
+const BOARD_COLS = 8; // 8列线 → 0..8，卡牌中心1..7
+const BOARD_ROWS = 12;// 12行线 → 0..12，卡牌中心1..11
+const CARD_W = CELL * 2;
+const CARD_H = CELL * 2.4;
+
+const ICONS = {
+  A:['🌱','🌿','🍀','☘️','🌳','🌲','🎄','🏔️'],
+  B:['💧','🫧','🌊','❄️','🧊','💎','🔮','👑'],
+  C:['🍎','🍊','🍋','🍇','🍒','🍓','🍰','🎂'],
+  D:['⭐','🌟','✨','💫','🔥','☀️','🌈','🎆'],
+  E:['🐣','🐥','🐤','🐓','🦅','🦉','🦚','🐉'],
+  F:['🪨','🧱','🏠','🏡','🏰','🏯','🗼','🌆'],
+  G:['🌸','🌺','🌹','💐','🌷','🏵️','🌻','🌼'],
+  H:['🍄','🌰','🫀','🧠','🦷','🌞','🌝','🌙'],
+};
+const CHAIN_NAMES = 'ABCDEFGH';
+const CHAIN_COLORS = {A:'#e74c3c',B:'#3498db',C:'#2ecc71',D:'#9b59b6',E:'#e67e22',F:'#1abc9c',G:'#e91e63',H:'#ff9800'};
+
+let chains = {}; // {A:4, B:4, ...}
+let placedCards = []; // {id,pos:[x,y,z],chain,level}
+let stagingCards = []; // {id,chain,level}
+let nextId = 1;
+let heldCard = null; // {id,chain,level,fromBoard,splitExc:[x,y]}
+let ctxCard = null;  // card right-clicked
+let mouseX = 0, mouseY = 0;
+
+const canvas = document.getElementById('board-canvas');
+const ctx = canvas.getContext('2d');
+canvas.width = BOARD_COLS * CELL;
+canvas.height = BOARD_ROWS * CELL;
+
+// ============ 初始化合成链 ============
+function initChains() {
+  const n = parseInt(document.getElementById('num-chains').value) || 3;
+  const maxLv = parseInt(document.getElementById('max-level').value) || 4;
+
+  // 读取自定义链名
+  const nameInputs = document.querySelectorAll('.chain-name-input');
+  chains = {};
+  for (let i = 0; i < n; i++) {
+    const name = nameInputs[i] ? nameInputs[i].value.toUpperCase() || CHAIN_NAMES[i] : CHAIN_NAMES[i];
+    chains[name] = maxLv;
+  }
+
+  // 清空
+  placedCards = [];
+  stagingCards = [];
+  nextId = 1;
+  heldCard = null;
+
+  // 为每条链生成一张满级牌放入待放区
+  for (const ch in chains) {
+    stagingCards.push({id: nextId++, chain: ch, level: chains[ch]});
+  }
+
+  renderBoard();
+  renderStaging();
+  renderConfig();
+  showToast('已生成 '+Object.keys(chains).length+' 条合成链', 'ok');
+}
+
+// 渲染链名输入框
+document.getElementById('num-chains').addEventListener('input', function() {
+  const n = Math.min(8, Math.max(1, parseInt(this.value)||3));
+  const row = document.getElementById('chain-names-row');
+  row.innerHTML = '';
+  for (let i = 0; i < n; i++) {
+    const def = CHAIN_NAMES[i];
+    row.innerHTML += `<div class="chain-item"><label>链${i+1}:</label><input class="chain-name-input" maxlength="1" value="${def}" placeholder="${def}"></div>`;
+  }
+});
+// 初始化
+document.getElementById('num-chains').dispatchEvent(new Event('input'));
+
+// ============ 棋盘绘制 ============
+function renderBoard() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // 背景
+  ctx.fillStyle = '#2a3a2a';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // 网格线
+  ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+  ctx.lineWidth = 1;
+  for (let x = 0; x <= BOARD_COLS; x++) {
+    ctx.beginPath(); ctx.moveTo(x*CELL, 0); ctx.lineTo(x*CELL, BOARD_ROWS*CELL); ctx.stroke();
+  }
+  for (let y = 0; y <= BOARD_ROWS; y++) {
+    ctx.beginPath(); ctx.moveTo(0, y*CELL); ctx.lineTo(BOARD_COLS*CELL, y*CELL); ctx.stroke();
+  }
+
+  // 交叉点
+  ctx.fillStyle = 'rgba(255,255,255,0.2)';
+  for (let x = 0; x <= BOARD_COLS; x++) {
+    for (let y = 0; y <= BOARD_ROWS; y++) {
+      ctx.beginPath(); ctx.arc(x*CELL, y*CELL, 2, 0, Math.PI*2); ctx.fill();
+    }
+  }
+
+  // 按z排序绘制卡牌（低层先绘制）
+  const sorted = [...placedCards].sort((a,b) => a.pos[2] - b.pos[2]);
+
+  sorted.forEach(card => {
+    const [gx, gy, gz] = card.pos;
+    const px = gx * CELL - CARD_W / 2;
+    const py = gy * CELL - CARD_H / 2;
+
+    const isTop = isTopmostCard(card);
+    const alpha = isTop ? 1.0 : 0.35;
+
+    ctx.globalAlpha = alpha;
+
+    // 底色
+    const grad = ctx.createLinearGradient(px, py, px + CARD_W, py + CARD_H);
+    grad.addColorStop(0, '#fafafa');
+    grad.addColorStop(1, '#e8e8e8');
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.roundRect(px, py, CARD_W, CARD_H, 6);
+    ctx.fill();
+
+    // 左侧色边
+    const col = CHAIN_COLORS[card.chain] || '#888';
+    ctx.fillStyle = col;
+    ctx.beginPath(); ctx.roundRect(px, py, 5, CARD_H, [6, 0, 0, 6]); ctx.fill();
+    // 下侧色边
+    ctx.fillStyle = CHAIN_COLORS[card.chain] ? darken(col) : '#666';
+    ctx.fillRect(px, py + CARD_H - 7, CARD_W, 7);
+    ctx.beginPath(); ctx.roundRect(px, py + CARD_H - 7, CARD_W, 7, [0, 0, 6, 6]); ctx.fill();
+
+    // 图案
+    const icons = ICONS[card.chain] || [card.chain];
+    const icon = icons[Math.min(card.level - 1, icons.length - 1)];
+    const fontSize = Math.round(16 + card.level * 2);
+    ctx.font = `${fontSize}px serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#333';
+    ctx.fillText(icon, px + CARD_W/2 + 2, py + CARD_H/2 - 6);
+
+    // LV 文字
+    ctx.font = '10px Microsoft YaHei';
+    ctx.fillStyle = '#666';
+    ctx.fillText('LV' + card.level, px + CARD_W/2 + 2, py + CARD_H - 14);
+
+    ctx.globalAlpha = 1.0;
+
+    // 外框
+    ctx.strokeStyle = isTop ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.15)';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.roundRect(px, py, CARD_W, CARD_H, 6); ctx.stroke();
+  });
+}
+
+function darken(hex) {
+  const n = parseInt(hex.replace('#',''), 16);
+  const r = Math.max(0, ((n>>16)&255) - 40);
+  const g = Math.max(0, ((n>>8)&255) - 40);
+  const b = Math.max(0, (n&255) - 40);
+  return '#'+[r,g,b].map(v=>v.toString(16).padStart(2,'0')).join('');
+}
+
+// ============ 上锁判定：某张牌是否为最顶层 ============
+function isTopmostCard(card) {
+  const [cx, cy, cz] = card.pos;
+  for (const o of placedCards) {
+    if (o === card) continue;
+    if (o.pos[2] <= cz) continue;
+    if (Math.abs(o.pos[0]-cx) < 2 && Math.abs(o.pos[1]-cy) < 2) return false;
+  }
+  return true;
+}
+
+// ============ z计算 ============
+function calcZ(gx, gy, excludeId) {
+  let z = 1;
+  for (const c of placedCards) {
+    if (c.id === excludeId) continue;
+    if (Math.abs(c.pos[0]-gx) < 2 && Math.abs(c.pos[1]-gy) < 2) {
+      z = Math.max(z, c.pos[2] + 1);
+    }
+  }
+  return z;
+}
+
+// ============ 悬浮预览 ============
+const hoverHint = document.getElementById('hover-hint');
+function updateHoverHint(gx, gy) {
+  if (!heldCard || gx < 1 || gx > BOARD_COLS-1 || gy < 1 || gy > BOARD_ROWS-1) {
+    hoverHint.style.display = 'none';
+    return;
+  }
+  const px = gx * CELL - CARD_W/2;
+  const py = gy * CELL - CARD_H/2;
+  const valid = isValidPlacement(gx, gy, heldCard.splitExc, heldCard.id);
+  hoverHint.style.display = 'block';
+  hoverHint.style.left = px + 'px';
+  hoverHint.style.top = py + 'px';
+  hoverHint.style.width = CARD_W + 'px';
+  hoverHint.style.height = CARD_H + 'px';
+  hoverHint.style.borderColor = valid ? '#ffd700' : '#ff6b6b';
+  hoverHint.style.background = valid ? 'rgba(255,215,0,0.12)' : 'rgba(255,100,100,0.12)';
+}
+
+// ============ 放置合法性检查 ============
+function isValidPlacement(gx, gy, splitExc, excludeId) {
+  // 超出边界
+  if (gx < 1 || gx > BOARD_COLS-1 || gy < 1 || gy > BOARD_ROWS-1) return false;
+  // 与分割源位置不可重叠
+  if (splitExc) {
+    if (Math.abs(gx-splitExc[0]) < 2 && Math.abs(gy-splitExc[1]) < 2) return false;
+  }
+  return true;
+}
+
+// ============ 持牌元素跟随鼠标 ============
+const heldEl = document.getElementById('held-card-el');
+function updateHeldEl() {
+  if (!heldCard) { heldEl.style.display = 'none'; return; }
+  const col = CHAIN_COLORS[heldCard.chain] || '#888';
+  const icons = ICONS[heldCard.chain] || [heldCard.chain];
+  const icon = icons[Math.min(heldCard.level-1, icons.length-1)];
+  heldEl.style.display = 'flex';
+  heldEl.style.width = CARD_W + 'px';
+  heldEl.style.height = CARD_H + 'px';
+  heldEl.style.left = mouseX + 'px';
+  heldEl.style.top = mouseY + 'px';
+  heldEl.className = 'card-el chain-' + heldCard.chain;
+  heldEl.style.opacity = '0.85';
+  heldEl.style.boxShadow = `0 8px 20px rgba(0,0,0,0.5)`;
+  heldEl.innerHTML = `<div class="c-icon" style="font-size:${16+heldCard.level*2}px">${icon}</div><div class="c-lv">LV${heldCard.level}</div>`;
+}
+
+// ============ 鼠标事件 ============
+document.addEventListener('mousemove', e => {
+  mouseX = e.clientX;
+  mouseY = e.clientY;
+  if (heldCard) {
+    updateHeldEl();
+    // 计算棋盘格坐标
+    const rect = canvas.getBoundingClientRect();
+    const bx = e.clientX - rect.left;
+    const by = e.clientY - rect.top;
+    const gx = Math.round(bx / CELL);
+    const gy = Math.round(by / CELL);
+    updateHoverHint(gx, gy);
+  }
+});
+
+// 棋盘点击
+canvas.addEventListener('click', e => {
+  closeCtx();
+  const rect = canvas.getBoundingClientRect();
+  const bx = e.clientX - rect.left;
+  const by = e.clientY - rect.top;
+  const gx = Math.round(bx / CELL);
+  const gy = Math.round(by / CELL);
+
+  if (heldCard) {
+    // 尝试放置
+    if (!isValidPlacement(gx, gy, heldCard.splitExc, heldCard.id)) {
+      if (gx < 1 || gx > BOARD_COLS-1 || gy < 1 || gy > BOARD_ROWS-1) {
+        showToast('超出棋盘范围', 'err');
+      } else {
+        showToast('放置失败：与分割源牌位置重叠', 'err');
+      }
+      return;
+    }
+    const z = calcZ(gx, gy, heldCard.id);
+    // 如果是从棋盘上拿起的牌，更新位置
+    if (heldCard.fromBoard) {
+      const card = placedCards.find(c => c.id === heldCard.id);
+      if (card) { card.pos = [gx, gy, z]; }
+    } else {
+      // 从待放区放置
+      placedCards.push({id: heldCard.id, pos:[gx,gy,z], chain:heldCard.chain, level:heldCard.level});
+    }
+    heldCard = null;
+    hoverHint.style.display = 'none';
+    updateHeldEl();
+    renderBoard();
+    renderConfig();
+    return;
+  }
+
+  // 没有持牌：点击棋盘上的卡牌（拿起顶层牌）
+  const card = getCardAt(gx, gy);
+  if (card && isTopmostCard(card)) {
+    placedCards = placedCards.filter(c => c.id !== card.id);
+    heldCard = {id:card.id, chain:card.chain, level:card.level, fromBoard:true, splitExc:null};
+    updateHeldEl();
+    renderBoard();
+    renderConfig();
+  }
+});
+
+// 棋盘右键
+canvas.addEventListener('contextmenu', e => {
+  e.preventDefault();
+  const rect = canvas.getBoundingClientRect();
+  const bx = e.clientX - rect.left;
+  const by = e.clientY - rect.top;
+  const gx = Math.round(bx / CELL);
+  const gy = Math.round(by / CELL);
+  const card = getCardAt(gx, gy);
+  if (!card) { closeCtx(); return; }
+  if (!isTopmostCard(card)) { showToast('上方有牌压住，无法操作', 'err'); return; }
+  ctxCard = card;
+  const menu = document.getElementById('ctx-menu');
+  menu.style.display = 'block';
+  menu.style.left = e.clientX + 'px';
+  menu.style.top = e.clientY + 'px';
+  // 等级1不能分割
+  menu.querySelector('div:first-child').style.opacity = card.level > 1 ? '1' : '0.4';
+  menu.querySelector('div:first-child').style.pointerEvents = card.level > 1 ? '' : 'none';
+});
+
+function getCardAt(gx, gy) {
+  // 返回该位置z最高的牌
+  let best = null;
+  for (const c of placedCards) {
+    if (Math.abs(c.pos[0]-gx) < 2 && Math.abs(c.pos[1]-gy) < 2) {
+      if (!best || c.pos[2] > best.pos[2]) best = c;
+    }
+  }
+  return best;
+}
+
+// ============ 右键菜单操作 ============
+function ctxSplit() {
+  closeCtx();
+  if (!ctxCard || ctxCard.level <= 1) return;
+  if (!isTopmostCard(ctxCard)) { showToast('被压住，无法分割', 'err'); return; }
+  const srcPos = [...ctxCard.pos];
+  // 原牌降级
+  ctxCard.level -= 1;
+  // 新牌（与降级后的原牌相同）
+  const newCard = {id: nextId++, chain: ctxCard.chain, level: ctxCard.level};
+  // 拿起新牌，设置splitExc为原牌位置
+  heldCard = {id: newCard.id, chain: newCard.chain, level: newCard.level, fromBoard: false, splitExc: [srcPos[0], srcPos[1]]};
+  updateHeldEl();
+  renderBoard();
+  renderConfig();
+  showToast('已分割，请将新牌放置到不与原牌重叠的位置', 'ok');
+}
+
+function ctxRemove() {
+  closeCtx();
+  if (!ctxCard) return;
+  if (!isTopmostCard(ctxCard)) { showToast('被压住，无法移出', 'err'); return; }
+  // 移回待放区
+  stagingCards.push({id: ctxCard.id, chain: ctxCard.chain, level: ctxCard.level});
+  placedCards = placedCards.filter(c => c.id !== ctxCard.id);
+  ctxCard = null;
+  renderBoard();
+  renderStaging();
+  renderConfig();
+}
+
+function closeCtx() {
+  document.getElementById('ctx-menu').style.display = 'none';
+  ctxCard = null;
+}
+document.addEventListener('click', closeCtx);
+document.getElementById('ctx-menu').addEventListener('click', e => e.stopPropagation());
+
+// 按ESC取消持牌
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && heldCard) {
+    if (heldCard.fromBoard) {
+      // 放回原处（没记录原始位置，退回到待放区）
+      stagingCards.push({id:heldCard.id,chain:heldCard.chain,level:heldCard.level});
+      renderStaging();
+    } else if (heldCard.splitExc) {
+      // 分割取消：原牌升回
+      const orig = placedCards.find(c =>
+        c.chain===heldCard.chain && c.level===heldCard.level &&
+        c.pos[0]===heldCard.splitExc[0] && c.pos[1]===heldCard.splitExc[1]);
+      if (orig) orig.level += 1;
+      renderBoard();
+    }
+    heldCard = null;
+    hoverHint.style.display = 'none';
+    updateHeldEl();
+    renderConfig();
+  }
+});
+
+// ============ 待放区 ============
+function renderStaging() {
+  const area = document.getElementById('staging-cards');
+  area.innerHTML = '';
+  stagingCards.forEach(card => {
+    const el = document.createElement('div');
+    el.className = 'card-el in-staging chain-' + card.chain;
+    const icons = ICONS[card.chain] || [card.chain];
+    const icon = icons[Math.min(card.level-1, icons.length-1)];
+    el.innerHTML = `<div class="c-icon" style="font-size:${14+card.level*2}px">${icon}</div><div class="c-lv">LV${card.level}</div>`;
+    el.title = `${card.chain}链 Lv.${card.level}（点击拿起）`;
+    el.addEventListener('click', () => {
+      if (heldCard) return;
+      stagingCards = stagingCards.filter(c => c.id !== card.id);
+      heldCard = {id:card.id, chain:card.chain, level:card.level, fromBoard:false, splitExc:null};
+      updateHeldEl();
+      renderStaging();
+    });
+    area.appendChild(el);
+  });
+}
+
+// ============ 右侧配置表 ============
+function renderConfig() {
+  const tbody = document.getElementById('config-tbody');
+  tbody.innerHTML = '';
+  const sorted = [...placedCards].sort((a,b) => a.pos[2]-b.pos[2] || a.chain.localeCompare(b.chain) || a.level-b.level);
+  sorted.forEach(card => {
+    const icons = ICONS[card.chain] || [card.chain];
+    const icon = icons[Math.min(card.level-1, icons.length-1)];
+    const tr = document.createElement('tr');
+    const col = CHAIN_COLORS[card.chain] || '#888';
+    tr.innerHTML = `
+      <td class="td-icon">${icon}</td>
+      <td><span style="color:${col};font-weight:bold">${card.chain}</span></td>
+      <td>Lv.${card.level}</td>
+      <td>${card.pos[0]}</td>
+      <td>${card.pos[1]}</td>
+      <td>${card.pos[2]}</td>`;
+    tbody.appendChild(tr);
+  });
+  document.getElementById('config-summary').textContent = `共 ${placedCards.length} 张牌`;
+}
+
+// ============ 复制功能 ============
+function copyTable() {
+  const sorted = [...placedCards].sort((a,b) => a.pos[2]-b.pos[2] || a.chain.localeCompare(b.chain));
+  const lines = ['链\t等级\tX\tY\tZ'];
+  sorted.forEach(c => lines.push(`${c.chain}\tLv.${c.level}\t${c.pos[0]}\t${c.pos[1]}\t${c.pos[2]}`));
+  copyText(lines.join('\n'), '表格已复制');
+}
+
+function copyJSON() {
+  const sorted = [...placedCards].sort((a,b) => a.pos[2]-b.pos[2]);
+  const chainsCfg = {};
+  for (const ch in chains) chainsCfg[ch] = chains[ch];
+  const obj = {
+    chains: chainsCfg,
+    cards: sorted.map(c => ({pos:[c.pos[0],c.pos[1],c.pos[2]], chain:c.chain, level:c.level}))
+  };
+  copyText(JSON.stringify(obj, null, 2), 'JSON已复制');
+}
+
+function copyText(text, msg) {
+  navigator.clipboard.writeText(text).then(() => showToast(msg, 'ok')).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = text; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); document.body.removeChild(ta);
+    showToast(msg, 'ok');
+  });
+}
+
+// ============ Toast ============
+let toastTimer;
+function showToast(msg, type) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = type || '';
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2000);
+}
+
+// ============ 初始渲染 ============
+renderBoard();
+</script>
+</body>
+</html>
