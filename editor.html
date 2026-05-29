@@ -16,7 +16,7 @@ body{background:#1a2a1a;font-family:'Microsoft YaHei',sans-serif;color:#eee;min-
 .tb{padding:7px 16px;border:none;border-radius:8px;font-size:13px;font-weight:bold;cursor:pointer}
 #main{display:flex;gap:16px;padding:16px;align-items:flex-start}
 #lp{display:flex;flex-direction:column;gap:10px}
-#sa{background:rgba(0,0,0,.3);border:2px dashed #3a5a3a;border-radius:10px;padding:10px;min-height:80px;transition:border-color .2s,background .2s;max-width:540px}
+#sa{background:rgba(0,0,0,.3);border:2px dashed #3a5a3a;border-radius:10px;padding:10px;min-height:80px;transition:border-color .2s,background .2s;max-width:560px}
 #sa.dov{border-color:#ffd700;background:rgba(255,215,0,.08)}
 #sa h3{font-size:12px;color:#888;margin-bottom:8px;line-height:1.6}
 #sc{display:flex;flex-wrap:wrap;gap:8px;min-height:44px}
@@ -27,7 +27,7 @@ canvas{display:block}
 #gh{position:fixed;pointer-events:none;z-index:99999;display:none;flex-direction:column;align-items:center;justify-content:center;border-radius:7px;background:linear-gradient(135deg,#fafafa,#e8e8e8);box-shadow:0 8px 28px rgba(0,0,0,.55);opacity:.88;color:#333;font-weight:bold;transform:translate(-50%,-50%)}
 .sc{display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:6px;cursor:grab;background:linear-gradient(135deg,#fafafa,#e8e8e8);color:#333;box-shadow:0 2px 6px rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.4);transition:transform .1s;user-select:none}
 .sc:hover{transform:translateY(-2px)}
-#rp{flex:1;min-width:340px;max-width:560px;background:rgba(0,0,0,.3);border-radius:10px;border:1px solid #3a5a3a;padding:14px}
+#rp{flex:1;min-width:360px;max-width:580px;background:rgba(0,0,0,.3);border-radius:10px;border:1px solid #3a5a3a;padding:14px}
 #rp h3{font-size:14px;color:#ffd700;margin-bottom:10px;display:flex;align-items:center}
 .cbs{display:flex;gap:8px;margin-left:auto}
 .cb{padding:4px 10px;border:1px solid #456;background:rgba(255,255,255,.08);color:#ccc;border-radius:6px;cursor:pointer;font-size:12px}
@@ -36,8 +36,8 @@ canvas{display:block}
 #ct th{background:rgba(50,80,130,.6);padding:5px 6px;text-align:center;color:#bcd}
 #ct td{padding:4px 6px;border-bottom:1px solid rgba(255,255,255,.06);text-align:center}
 #ct tr:hover td{background:rgba(255,255,255,.04)}
-.fp-col{color:#e67e22;font-size:10px}
-.fp2-col{color:#3498db;font-size:10px}
+.fp1c{color:#e67e22;font-size:10px}
+.fp2c{color:#3498db;font-size:10px}
 #cs{margin-top:10px;font-size:12px;color:#888;padding-top:8px;border-top:1px solid #333}
 #toast{position:fixed;top:74px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.88);color:#fff;padding:10px 22px;border-radius:10px;font-size:13px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:200000;border:1px solid rgba(255,255,255,.1);white-space:nowrap}
 #toast.show{opacity:1}#toast.err{color:#ff6b6b}#toast.ok{color:#2ecc71}
@@ -64,7 +64,6 @@ canvas{display:block}
   <button class="tb" onclick="shareLevel()" style="background:linear-gradient(180deg,#3498db,#2980b9);color:#fff">🔗 分享</button>
   <span id="cnr" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"></span>
 </div>
-
 <div id="main">
   <div id="lp">
     <div id="sa">
@@ -74,7 +73,6 @@ canvas{display:block}
     <div id="ops">🖱 <b>左键拖拽</b> 移动棋盘上的卡牌 &nbsp;|&nbsp; 🖱 <b>右键</b> 分割顶层牌(Lv&gt;1) &nbsp;|&nbsp; ⌨ <b>ESC</b> 取消持牌</div>
     <div id="bw"><canvas id="cv"></canvas><div id="hh"></div></div>
   </div>
-
   <div id="rp">
     <h3>关卡配置
       <div class="cbs">
@@ -86,8 +84,8 @@ canvas{display:block}
       <thead>
         <tr>
           <th>图案</th><th>链</th><th>等级</th><th>X</th><th>Y</th><th>Z</th>
-          <th class="fp-col" title="分割后不可放置的源位坐标">fp1</th>
-          <th class="fp2-col" title="子牌落点禁区坐标列表">fp2</th>
+          <th class="fp1c" title="父牌当前位置（不可与该位置重叠）">fp1</th>
+          <th class="fp2c" title="所有子牌当前位置（不可移动至这些位置）">fp2</th>
         </tr>
       </thead>
       <tbody id="cb2"></tbody>
@@ -95,10 +93,8 @@ canvas{display:block}
     <div id="cs">共 0 张牌</div>
   </div>
 </div>
-
 <div id="gh"></div>
 <div id="toast"></div>
-
 <div id="pp">
   <div id="pi">
     <div id="ph">
@@ -117,7 +113,6 @@ canvas{display:block}
     <div id="ptb"></div>
   </div>
 </div>
-
 <script>
 var CELL=44, COLS=12, ROWS=18, CW=CELL*2, CH=Math.round(CELL*2.4);
 var ICONS={
@@ -134,25 +129,28 @@ var CD={A:'#c0392b',B:'#2980b9',C:'#27ae60',D:'#8e44ad',E:'#d35400',F:'#16a085',
   卡牌数据结构：
   {
     id, pos:[x,y,z], chain, level,
-    fp1: [x,y] | null,   // 此牌不可与该坐标重叠（被分割时产生的新牌的禁区，永久）
-    fp2: [[x,y],...],    // 此牌不可移动到的坐标列表（子牌落点累积）
-    parentId: id | null  // 分割时的父卡牌id（用于放置时更新父牌fp2）
+    parentId: id | null,   // 我是从哪张牌分割出来的（父牌id）
+    childIds: [id, ...]    // 从我身上分割出去的牌的id列表
   }
+
+  fp1（动态计算）= 父牌的当前位置 → 我不能放置在与父牌重叠的地方
+  fp2（动态计算）= 所有子牌的当前位置列表 → 我不能移动到这些位置
+
+  为什么动态计算而非存储：
+  - 父牌/子牌移动时，坐标随时变化
+  - 直接通过 parentId/childIds 查找对应卡牌的当前 pos 即可
 */
 
 var chains={}, placed=[], staging=[], nid=1;
 var splitHistory=[];
-
-// held: 当前持牌
-// {id, chain, level, fp1, fp2, parentId, fromBoard, origPos}
-var held=null;
+var held=null; // {id, chain, level, parentId, childIds, fromBoard, origPos}
 var mx=0, my=0;
 
 var cv=document.getElementById('cv'), ctx=cv.getContext('2d');
 var hh=document.getElementById('hh'), gh=document.getElementById('gh');
 cv.width=COLS*CELL; cv.height=ROWS*CELL;
 
-// ── 链名输入行 ──
+// ── 链名输入行 ──────────────────────────────────────────────────────────────
 document.getElementById('nc').addEventListener('input',function(){
   var n=Math.min(8,Math.max(1,parseInt(this.value)||3));
   var row=document.getElementById('cnr'); row.innerHTML='';
@@ -160,7 +158,7 @@ document.getElementById('nc').addEventListener('input',function(){
 });
 document.getElementById('nc').dispatchEvent(new Event('input'));
 
-// ── 辅助函数 ──
+// ── 辅助 ────────────────────────────────────────────────────────────────────
 function icon(chain,level){var a=ICONS[chain]||[chain];return a[Math.min(level-1,a.length-1)];}
 
 function isTop(card){
@@ -171,7 +169,6 @@ function isTop(card){
   }
   return true;
 }
-
 function calcZ(gx,gy,skipId){
   var z=1;
   for(var i=0;i<placed.length;i++){
@@ -180,7 +177,6 @@ function calcZ(gx,gy,skipId){
   }
   return z;
 }
-
 function topAt(gx,gy){
   var best=null;
   for(var i=0;i<placed.length;i++){
@@ -190,33 +186,60 @@ function topAt(gx,gy){
   }
   return best;
 }
+function bcoords(e){var r=cv.getBoundingClientRect();return[Math.round((e.clientX-r.left)/CELL),Math.round((e.clientY-r.top)/CELL)];}
 
-// canPlace: 检查持牌是否可以放置在(gx,gy)
-// 检查 held.fp1（该牌不可与fp1位置重叠）
-// 检查 held.fp2（该牌不可移到fp2任一位置）
+// 查找父牌当前位置（fp1）
+function getFp1(card){
+  if(!card.parentId) return null;
+  var p=placed.find(function(c){return c.id===card.parentId;});
+  return p?[p.pos[0],p.pos[1]]:null;
+}
+// 查找所有子牌当前位置（fp2）
+function getFp2(card){
+  if(!card.childIds||card.childIds.length===0) return [];
+  var result=[];
+  card.childIds.forEach(function(cid){
+    var child=placed.find(function(c){return c.id===cid;});
+    if(child) result.push([child.pos[0],child.pos[1]]);
+  });
+  return result;
+}
+
+// 判断(gx,gy)是否与某个位置重叠
+function overlaps(gx,gy,pos){return Math.abs(gx-pos[0])<2&&Math.abs(gy-pos[1])<2;}
+
+// canPlace: 检查 held 是否可以放置在 (gx,gy)
+// held 持牌时，fp1/fp2 是相对于 placed 里的其他牌动态计算的
 function canPlace(gx,gy){
   if(gx<1||gx>COLS-1||gy<1||gy>ROWS-1) return false;
   if(!held) return false;
-  if(held.fp1){
-    if(Math.abs(gx-held.fp1[0])<2&&Math.abs(gy-held.fp1[1])<2) return false;
-  }
-  if(held.fp2&&held.fp2.length>0){
-    for(var i=0;i<held.fp2.length;i++)
-      if(Math.abs(gx-held.fp2[i][0])<2&&Math.abs(gy-held.fp2[i][1])<2) return false;
-  }
+  // fp1：父牌当前位置（即使父牌已移动也实时更新）
+  var fp1=getHeldFp1();
+  if(fp1&&overlaps(gx,gy,fp1)) return false;
+  // fp2：所有子牌当前位置
+  var fp2=getHeldFp2();
+  for(var i=0;i<fp2.length;i++) if(overlaps(gx,gy,fp2[i])) return false;
   return true;
 }
-
-function bcoords(e){var r=cv.getBoundingClientRect();return[Math.round((e.clientX-r.left)/CELL),Math.round((e.clientY-r.top)/CELL)];}
-
-function cloneCard(c){
-  return{id:c.id,pos:c.pos.slice(),chain:c.chain,level:c.level,
-    fp1:c.fp1?[c.fp1[0],c.fp1[1]]:null,
-    fp2:(c.fp2||[]).map(function(p){return[p[0],p[1]];}),
-    parentId:c.parentId||null};
+// 从 held 计算 fp1（父牌当前位置）
+function getHeldFp1(){
+  if(!held||!held.parentId) return null;
+  // 父牌可能在 placed 里（放置中）或不在（也持牌中，极少情况）
+  var p=placed.find(function(c){return c.id===held.parentId;});
+  return p?[p.pos[0],p.pos[1]]:null;
+}
+// 从 held 计算 fp2（子牌当前位置列表）
+function getHeldFp2(){
+  if(!held||!held.childIds||held.childIds.length===0) return [];
+  var result=[];
+  held.childIds.forEach(function(cid){
+    var child=placed.find(function(c){return c.id===cid;});
+    if(child) result.push([child.pos[0],child.pos[1]]);
+  });
+  return result;
 }
 
-// ── 初始化 & 重置 ──
+// ── 初始化 & 重置 ────────────────────────────────────────────────────────────
 function initChains(){
   var n=Math.min(8,Math.max(1,parseInt(document.getElementById('nc').value)||3));
   var maxLv=Math.min(8,Math.max(2,parseInt(document.getElementById('ml').value)||4));
@@ -226,20 +249,17 @@ function initChains(){
   for(var i=0;i<n;i++){
     var nm=((ins[i]?ins[i].value:CN[i]).toUpperCase().trim())||CN[i];
     chains[nm]=maxLv;
-    // 从待放入区进入的满级牌：fp1=null, fp2=[]
     staging.push({id:nid++,chain:nm,level:maxLv});
   }
   renderBoard(); renderStaging(); renderConfig(); updateBtns();
   showToast('已生成 '+n+' 条合成链','ok');
 }
-
 function resetEditor(){
   if(!confirm('确定重置？将清空棋盘和待放入区块。')) return;
   chains={}; placed=[]; staging=[]; nid=1; held=null; splitHistory=[];
   ghostHide(); renderBoard(); renderStaging(); renderConfig(); updateBtns();
   showToast('已重置','ok');
 }
-
 function updateBtns(){
   var ok=staging.length===0&&placed.length>0;
   var bp=document.getElementById('btn-play');
@@ -249,7 +269,7 @@ function updateBtns(){
   bu.disabled=!uok; bu.style.opacity=uok?'1':'.4'; bu.style.cursor=uok?'pointer':'not-allowed';
 }
 
-// ── 棋盘绘制 ──
+// ── 棋盘绘制 ─────────────────────────────────────────────────────────────────
 function renderBoard(){
   ctx.clearRect(0,0,cv.width,cv.height);
   ctx.fillStyle='#2a3a2a'; ctx.fillRect(0,0,cv.width,cv.height);
@@ -261,7 +281,6 @@ function renderBoard(){
   var sorted=placed.slice().sort(function(a,b){return a.pos[2]-b.pos[2];});
   for(var i=0;i<sorted.length;i++) drawCard(sorted[i],isTop(sorted[i]));
 }
-
 function drawCard(card,top){
   var gx=card.pos[0],gy=card.pos[1],px=gx*CELL-CW/2,py=gy*CELL-CH/2;
   var col=CC[card.chain]||'#888', dk=CD[card.chain]||'#555';
@@ -281,7 +300,7 @@ function drawCard(card,top){
   ctx.globalAlpha=1;
 }
 
-// ── Ghost ──
+// ── Ghost ─────────────────────────────────────────────────────────────────────
 function ghostShow(){
   if(!held){ghostHide();return;}
   var col=CC[held.chain]||'#888', dk=CD[held.chain]||'#555', fs=Math.round(14+held.level*2.5);
@@ -299,18 +318,16 @@ function ghostShow(){
 function ghostHide(){gh.style.display='none';}
 function ghostMove(){if(held){gh.style.left=mx+'px';gh.style.top=my+'px';}}
 
-// ── 悬浮预览 ──
+// ── 悬浮预览 ──────────────────────────────────────────────────────────────────
 function showHint(gx,gy){
   if(!held){hh.style.display='none';return;}
-  var v=canPlace(gx,gy);
-  var px=gx*CELL-CW/2, py=gy*CELL-CH/2;
+  var v=canPlace(gx,gy), px=gx*CELL-CW/2, py=gy*CELL-CH/2;
   Object.assign(hh.style,{display:'block',left:px+'px',top:py+'px',width:CW+'px',height:CH+'px',
-    border:'2px dashed '+(v?'#ffd700':'#ff6b6b'),
-    background:v?'rgba(255,215,0,.1)':'rgba(255,80,80,.1)'});
+    border:'2px dashed '+(v?'#ffd700':'#ff6b6b'),background:v?'rgba(255,215,0,.1)':'rgba(255,80,80,.1)'});
 }
 function hideHint(){hh.style.display='none';}
 
-// ── 鼠标移动 ──
+// ── 鼠标移动 ──────────────────────────────────────────────────────────────────
 document.addEventListener('mousemove',function(e){
   mx=e.clientX; my=e.clientY; ghostMove();
   if(!held){hideHint();return;}
@@ -326,126 +343,115 @@ document.addEventListener('mousemove',function(e){
   }
 });
 
-// ── 棋盘 mousedown（拿起） ──
+// ── 快照辅助 ─────────────────────────────────────────────────────────────────
+function snapCard(c){
+  return{id:c.id,pos:c.pos.slice(),chain:c.chain,level:c.level,
+    parentId:c.parentId||null,childIds:(c.childIds||[]).slice()};
+}
+function restoreCard(s){
+  return{id:s.id,pos:s.pos.slice(),chain:s.chain,level:s.level,
+    parentId:s.parentId||null,childIds:(s.childIds||[]).slice()};
+}
+
+// ── 拿起卡牌（mousedown on canvas）──────────────────────────────────────────
 cv.addEventListener('mousedown',function(e){
   if(e.button!==0||held) return;
   e.preventDefault();
   var gc=bcoords(e), card=topAt(gc[0],gc[1]);
   if(!card||!isTop(card)) return;
-  // 拿起：从placed移除，进入held
   placed=placed.filter(function(c){return c.id!==card.id;});
   held={id:card.id,chain:card.chain,level:card.level,
-    fp1:card.fp1?[card.fp1[0],card.fp1[1]]:null,
-    fp2:(card.fp2||[]).map(function(p){return[p[0],p[1]];}),
     parentId:card.parentId||null,
+    childIds:(card.childIds||[]).slice(),
     fromBoard:true, origPos:card.pos.slice()};
   ghostShow(); renderBoard(); renderConfig(); updateBtns();
 });
 
-// ── 棋盘 mouseup（放置） ──
+// ── 放置卡牌（mouseup 全局）──────────────────────────────────────────────────
 document.addEventListener('mouseup',function(e){
   if(!held) return;
-
-  // 检查是否在待放入区
   var sa=document.getElementById('sa'), sr=sa.getBoundingClientRect();
   var inStaging=e.clientX>=sr.left&&e.clientX<=sr.right&&e.clientY>=sr.top&&e.clientY<=sr.bottom;
 
   if(inStaging){
-    // 只有满级牌可以退回
+    // 尝试退回待放入区
     var maxLv=chains[held.chain]||0;
     if(held.level<maxLv){
       showToast('只有满级牌可以退回待放入区','err');
-      // 如果是从棋盘拿起的，放回原位
-      if(held.fromBoard){
-        placed.push({id:held.id,pos:held.origPos.slice(),chain:held.chain,level:held.level,
-          fp1:held.fp1?[held.fp1[0],held.fp1[1]]:null,
-          fp2:(held.fp2||[]).map(function(p){return[p[0],p[1]];}),
-          parentId:held.parentId});
-        renderBoard();
-      } else if(held.parentId){
-        // 分割产生的新牌取消放置 → 恢复父牌等级，弹出历史
-        var parent=placed.find(function(c){return c.id===held.parentId;});
-        if(parent) parent.level+=1;
-        if(splitHistory.length>0) splitHistory.pop();
-        renderBoard();
-      }
-    } else {
-      // 满级牌退回staging
-      if(held.fromBoard&&held.parentId){
-        // 如果这张牌有parentId（来自分割），还原父牌fp2（移除这张牌的落点）
-        // 由于不知道这张牌之前的落点（已移动），不做fp2的回退（保持fp2）
-      }
-      staging.push({id:held.id,chain:held.chain,level:held.level});
-      renderStaging();
+      // 放回原位
+      if(held.fromBoard) putBack();
+      else cancelNewCard();
+      return;
     }
+    staging.push({id:held.id,chain:held.chain,level:held.level});
+    renderStaging();
     held=null; ghostHide(); hideHint();
     sa.classList.remove('dov');
     renderConfig(); updateBtns();
     return;
   }
 
-  // 检查是否在棋盘上
+  // 是否在棋盘
   var r=cv.getBoundingClientRect(), bx=e.clientX-r.left, by=e.clientY-r.top;
-  if(bx>=0&&bx<=cv.width&&by>=0&&by<=cv.height){
-    var gc=bcoords(e), gx=gc[0], gy=gc[1];
-    if(!canPlace(gx,gy)){
-      showToast('无法放置：位置在禁区内','err');
-      // 放回原位（如果是棋盘牌）
-      if(held.fromBoard){
-        placed.push({id:held.id,pos:held.origPos.slice(),chain:held.chain,level:held.level,
-          fp1:held.fp1?[held.fp1[0],held.fp1[1]]:null,
-          fp2:(held.fp2||[]).map(function(p){return[p[0],p[1]];}),
-          parentId:held.parentId});
-        renderBoard(); renderConfig();
-      }
-      held=null; ghostHide(); hideHint();
-      updateBtns(); return;
-    }
-
-    var skipId=held.fromBoard?held.id:null;
-    var z=calcZ(gx,gy,skipId);
-    var newCard={id:held.id,pos:[gx,gy,z],chain:held.chain,level:held.level,
-      fp1:held.fp1?[held.fp1[0],held.fp1[1]]:null,
-      fp2:(held.fp2||[]).map(function(p){return[p[0],p[1]];}),
-      parentId:held.parentId||null};
-    placed.push(newCard);
-
-    // 放置后：如果这张牌有parentId（是分割产生的新牌），更新父牌的fp2
-    if(held.parentId){
-      var parent=placed.find(function(c){return c.id===held.parentId;});
-      if(parent){
-        // 检查是否已经记录过该落点（避免重复）
-        var alreadyHas=parent.fp2.some(function(p){return p[0]===gx&&p[1]===gy;});
-        if(!alreadyHas) parent.fp2.push([gx,gy]);
-      }
-    }
-
-    held=null; ghostHide(); hideHint();
-    sa.classList.remove('dov');
-    renderBoard(); renderConfig(); updateBtns();
+  var inBoard=bx>=0&&bx<=cv.width&&by>=0&&by<=cv.height;
+  if(!inBoard){
+    // 棋盘外且不在待放区 → 放回原位
+    if(held.fromBoard) putBack();
+    else cancelNewCard();
     return;
   }
 
-  // 鼠标在棋盘外且不在待放入区 → 放回原位
-  if(held.fromBoard){
-    placed.push({id:held.id,pos:held.origPos.slice(),chain:held.chain,level:held.level,
-      fp1:held.fp1?[held.fp1[0],held.fp1[1]]:null,
-      fp2:(held.fp2||[]).map(function(p){return[p[0],p[1]];}),
-      parentId:held.parentId});
-    renderBoard(); renderConfig();
-  } else if(held.parentId){
-    // 分割新牌 → 恢复父牌等级
-    var parent2=placed.find(function(c){return c.id===held.parentId;});
-    if(parent2) parent2.level+=1;
-    if(splitHistory.length>0) splitHistory.pop();
-    renderBoard(); renderConfig();
+  var gc=bcoords(e), gx=gc[0], gy=gc[1];
+  if(!canPlace(gx,gy)){
+    showToast('无法放置：位置在禁区内','err');
+    if(held.fromBoard) putBack();
+    else cancelNewCard();
+    return;
   }
+
+  // 合法放置
+  var skipId=held.fromBoard?held.id:null;
+  var z=calcZ(gx,gy,skipId);
+  placed.push({id:held.id,pos:[gx,gy,z],chain:held.chain,level:held.level,
+    parentId:held.parentId||null,childIds:(held.childIds||[]).slice()});
+
+  // 放置后更新关系：
+  // 1. 如果这张牌是分割新牌（有parentId）：
+  //    父牌的 childIds 里有这张牌的id（分割时已加），
+  //    父牌的 fp2 会在 renderConfig 时动态计算，无需操作
+  // 2. 如果这张牌是从棋盘移动来的（fromBoard）：
+  //    它的父牌 fp2 会在 renderConfig 动态计算新位置
+  //    它的子牌 fp1 会在 renderConfig 动态计算新位置
+  // 动态计算机制：不需要在这里更新任何数据！
+
   held=null; ghostHide(); hideHint();
-  document.getElementById('sa').classList.remove('dov');
-  updateBtns();
+  sa.classList.remove('dov');
+  renderBoard(); renderConfig(); updateBtns();
 });
 
-// ── 右键：分割 ──
+function putBack(){
+  placed.push({id:held.id,pos:held.origPos.slice(),chain:held.chain,level:held.level,
+    parentId:held.parentId||null,childIds:(held.childIds||[]).slice()});
+  held=null; ghostHide(); hideHint();
+  document.getElementById('sa').classList.remove('dov');
+  renderBoard(); renderConfig(); updateBtns();
+}
+function cancelNewCard(){
+  // 分割产生的新牌取消 → 恢复父牌等级，父牌 childIds 移除该id，弹出历史
+  if(held.parentId){
+    var parent=placed.find(function(c){return c.id===held.parentId;});
+    if(parent){
+      parent.level+=1;
+      parent.childIds=parent.childIds.filter(function(cid){return cid!==held.id;});
+    }
+  }
+  if(splitHistory.length>0) splitHistory.pop();
+  held=null; ghostHide(); hideHint();
+  document.getElementById('sa').classList.remove('dov');
+  renderBoard(); renderConfig(); updateBtns();
+}
+
+// ── 右键：分割 ───────────────────────────────────────────────────────────────
 cv.addEventListener('contextmenu',function(e){
   e.preventDefault();
   if(held){showToast('请先放下手中的牌','err');return;}
@@ -456,59 +462,41 @@ cv.addEventListener('contextmenu',function(e){
 
   // 保存历史快照
   splitHistory.push({
-    placed:JSON.stringify(placed.map(function(c){return cloneCard(c);})),
+    placed:JSON.stringify(placed.map(snapCard)),
     staging:JSON.stringify(staging.map(function(c){return{id:c.id,chain:c.chain,level:c.level};})),
     nid:nid
   });
 
-  var srcPos=card.pos.slice();
-
-  // 原牌降级，fp2不变，fp1不变
+  // 原牌降级，在 childIds 中追加新牌id
   card.level-=1;
-
-  // 新牌：fp1 = 原牌当前位置（不可与原牌重叠）
-  //        fp2 = []（新牌还没有子牌）
-  //        parentId = 原牌id（放置时更新原牌fp2）
   var newId=nid++;
-  held={id:newId, chain:card.chain, level:card.level,
-    fp1:[srcPos[0],srcPos[1]],   // 新牌禁区：原牌位置
-    fp2:[],
+  card.childIds=card.childIds||[];
+  card.childIds.push(newId);
+
+  // 新牌：parentId = 原牌id（用于动态计算fp1），childIds = []
+  held={id:newId,chain:card.chain,level:card.level,
     parentId:card.id,
+    childIds:[],
     fromBoard:false, origPos:null};
 
   ghostShow(); renderBoard(); renderConfig(); updateBtns();
-  showToast('分割完成，请放置新牌（禁区：原牌位置）','ok');
+  showToast('分割完成，请放置新牌','ok');
 });
 
-// ── ESC 取消 ──
+// ── ESC 取消 ─────────────────────────────────────────────────────────────────
 document.addEventListener('keydown',function(e){
   if(e.key!=='Escape'||!held) return;
-  if(held.parentId&&!held.fromBoard){
-    // 取消分割新牌 → 恢复父牌等级，弹出历史
-    var parent=placed.find(function(c){return c.id===held.parentId;});
-    if(parent) parent.level+=1;
-    if(splitHistory.length>0) splitHistory.pop();
-    renderBoard();
-  } else if(held.fromBoard){
-    // 放回原位
-    placed.push({id:held.id,pos:held.origPos.slice(),chain:held.chain,level:held.level,
-      fp1:held.fp1?[held.fp1[0],held.fp1[1]]:null,
-      fp2:(held.fp2||[]).map(function(p){return[p[0],p[1]];}),
-      parentId:held.parentId});
-    renderBoard();
-  }
-  held=null; ghostHide(); hideHint();
-  document.getElementById('sa').classList.remove('dov');
-  renderConfig(); updateBtns();
+  if(held.fromBoard) putBack();
+  else cancelNewCard();
   showToast('已取消','ok');
 });
 
-// ── 撤销分割 ──
+// ── 撤销分割 ─────────────────────────────────────────────────────────────────
 function undoSplit(){
   if(splitHistory.length===0) return;
   if(held){showToast('请先放下手中的牌','err');return;}
   var snap=splitHistory.pop();
-  placed=JSON.parse(snap.placed);
+  placed=JSON.parse(snap.placed).map(restoreCard);
   staging=JSON.parse(snap.staging);
   nid=snap.nid;
   held=null; ghostHide();
@@ -516,13 +504,13 @@ function undoSplit(){
   showToast('已撤销分割','ok');
 }
 
-// ── 待放入区渲染 ──
+// ── 待放入区渲染 ──────────────────────────────────────────────────────────────
 function renderStaging(){
   var area=document.getElementById('sc'); area.innerHTML='';
   staging.forEach(function(card){
     var col=CC[card.chain]||'#888', dk=CD[card.chain]||'#555';
     var el=document.createElement('div'); el.className='sc';
-    el.title=card.chain+'链 Lv.'+card.level+' (按住拖拽至棋盘)';
+    el.title=card.chain+'链 Lv.'+card.level;
     Object.assign(el.style,{width:'60px',height:'72px',
       borderLeft:'4px solid '+col,borderBottom:'6px solid '+dk,
       borderTop:'1px solid rgba(255,255,255,.4)',borderRight:'1px solid rgba(255,255,255,.4)'});
@@ -533,40 +521,39 @@ function renderStaging(){
       if(ev.button!==0||held) return;
       ev.preventDefault(); ev.stopPropagation();
       staging=staging.filter(function(c){return c.id!==card.id;});
-      // 从待放入区来的牌：fp1=null, fp2=[], parentId=null
+      // 从待放入区来的满级牌：无父子关系
       held={id:card.id,chain:card.chain,level:card.level,
-        fp1:null, fp2:[], parentId:null, fromBoard:false, origPos:null};
+        parentId:null,childIds:[],fromBoard:false,origPos:null};
       ghostShow(); renderStaging();
     });
     area.appendChild(el);
   });
 }
 
-// ── 配置表（含fp1/fp2列）──
-function fmtFp1(fp1){return fp1?'('+fp1[0]+','+fp1[1]+')':'-';}
-function fmtFp2(fp2){
-  if(!fp2||fp2.length===0) return '-';
-  return fp2.map(function(p){return'('+p[0]+','+p[1]+')';}).join(' ');
-}
+// ── 配置表（fp1/fp2 动态计算显示）───────────────────────────────────────────
+function fmtPos(p){return p?'('+p[0]+','+p[1]+')':'-';}
+function fmtPosList(list){return list&&list.length>0?list.map(function(p){return'('+p[0]+','+p[1]+')';}).join(' '):'-';}
 
 function renderConfig(){
   var tb=document.getElementById('cb2'); tb.innerHTML='';
   placed.slice().sort(function(a,b){return a.pos[2]-b.pos[2]||a.chain.localeCompare(b.chain)||a.level-b.level;})
     .forEach(function(card){
       var col=CC[card.chain]||'#888', tr=document.createElement('tr');
+      var fp1=getFp1(card);
+      var fp2=getFp2(card);
       tr.innerHTML='<td>'+icon(card.chain,card.level)+'</td>'
         +'<td style="color:'+col+';font-weight:bold">'+card.chain+'</td>'
         +'<td>Lv.'+card.level+'</td>'
         +'<td>'+card.pos[0]+'</td><td>'+card.pos[1]+'</td><td>'+card.pos[2]+'</td>'
-        +'<td class="fp-col">'+fmtFp1(card.fp1)+'</td>'
-        +'<td class="fp2-col">'+fmtFp2(card.fp2)+'</td>';
+        +'<td class="fp1c">'+fmtPos(fp1)+'</td>'
+        +'<td class="fp2c">'+fmtPosList(fp2)+'</td>';
       tb.appendChild(tr);
     });
   document.getElementById('cs').textContent='共 '+placed.length+' 张牌';
   updateBtns();
 }
 
-// ── 复制（不含fp1/fp2）──
+// ── 复制（不含fp列）─────────────────────────────────────────────────────────
 function copyTable(){
   var lines=['链\t等级\tX\tY\tZ'];
   placed.slice().sort(function(a,b){return a.pos[2]-b.pos[2]||a.chain.localeCompare(b.chain);})
@@ -584,8 +571,6 @@ function doCopy(text,msg){
     var t=document.createElement('textarea');t.value=text;document.body.appendChild(t);t.select();document.execCommand('copy');t.remove();showToast(msg,'ok');
   });
 }
-
-// ── 分享 ──
 function shareLevel(){
   if(placed.length===0){showToast('棋盘上没有牌','err');return;}
   var bad=placed.filter(function(c){return c.level>=(chains[c.chain]||0);});
@@ -597,7 +582,7 @@ function shareLevel(){
   doCopy(url,'分享链接已复制！');
 }
 
-// ── Toast ──
+// ── Toast ─────────────────────────────────────────────────────────────────────
 var tt;
 function showToast(msg,type){
   var el=document.getElementById('toast');
@@ -605,7 +590,7 @@ function showToast(msg,type){
   clearTimeout(tt); tt=setTimeout(function(){el.classList.remove('show');},2200);
 }
 
-// ════════ 试玩模式 ════════
+// ════════ 试玩模式 ════════════════════════════════════════════════════════════
 var PT=44, ptCards=[], ptProgress=0, ptChains={}, ptStash=[], ptHistory=[], ptRemMode=false;
 var ptDC=null, ptDE=null, ptSX=0, ptSY=0, ptOL=0, ptOT=0, ptOZ='';
 
@@ -638,8 +623,8 @@ function ptRender(){
     var cw=ptCW(),ch=ptCH(),col=CC[card.chain]||'#888',dk=CD[card.chain]||'#555';
     var ica=ICONS[card.chain]||[card.chain],ico=ica[Math.min(card.level-1,ica.length-1)];
     var fs=Math.round(12+card.level*2.2);
-    Object.assign(el.style,{position:'absolute',cursor:'grab',borderRadius:'6px',display:'flex',flexDirection:'column',
-      alignItems:'center',justifyContent:'center',fontWeight:'bold',userSelect:'none',
+    Object.assign(el.style,{position:'absolute',cursor:'grab',borderRadius:'6px',display:'flex',
+      flexDirection:'column',alignItems:'center',justifyContent:'center',fontWeight:'bold',userSelect:'none',
       background:'linear-gradient(135deg,#fafafa,#e8e8e8)',
       borderLeft:'4px solid '+col,borderBottom:'6px solid '+dk,
       borderTop:'1px solid rgba(255,255,255,.4)',borderRight:'1px solid rgba(255,255,255,.4)',
@@ -765,8 +750,8 @@ function ptRenderStash(){
       ev.preventDefault(); if(ev.button!==0) return;
       ptStash=ptStash.filter(function(c){return c.id!==card.id;}); ptRenderStash();
       var gEl=document.createElement('div');
-      Object.assign(gEl.style,{position:'fixed',zIndex:'99999',pointerEvents:'none',width:'36px',height:'44px',borderRadius:'5px',
-        display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',
+      Object.assign(gEl.style,{position:'fixed',zIndex:'99999',pointerEvents:'none',width:'36px',height:'44px',
+        borderRadius:'5px',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',
         background:'linear-gradient(135deg,#fafafa,#e8e8e8)',borderLeft:'3px solid '+col,borderBottom:'4px solid '+dk,
         opacity:'.85',left:ev.clientX-18+'px',top:ev.clientY-22+'px'});
       gEl.innerHTML='<span style="font-size:14px">'+ico+'</span>';
