@@ -16,26 +16,28 @@ body{background:#1a2a1a;font-family:'Microsoft YaHei',sans-serif;color:#eee;min-
 .tb{padding:7px 16px;border:none;border-radius:8px;font-size:13px;font-weight:bold;cursor:pointer}
 #main{display:flex;gap:16px;padding:16px;align-items:flex-start}
 #lp{display:flex;flex-direction:column;gap:10px}
-#sa{background:rgba(0,0,0,.3);border:2px dashed #3a5a3a;border-radius:10px;padding:10px;min-height:76px;transition:border-color .2s,background .2s}
+#sa{background:rgba(0,0,0,.3);border:2px dashed #3a5a3a;border-radius:10px;padding:10px;min-height:80px;transition:border-color .2s,background .2s;max-width:540px}
 #sa.dov{border-color:#ffd700;background:rgba(255,215,0,.08)}
-#sa h3{font-size:13px;color:#888;margin-bottom:8px}
+#sa h3{font-size:12px;color:#888;margin-bottom:8px;line-height:1.6}
 #sc{display:flex;flex-wrap:wrap;gap:8px;min-height:44px}
 #ops{font-size:11px;color:#555;line-height:1.9}#ops b{color:#888}
 #bw{position:relative}
 canvas{display:block}
 #hh{position:absolute;top:0;left:0;pointer-events:none;display:none;border-radius:5px}
 #gh{position:fixed;pointer-events:none;z-index:99999;display:none;flex-direction:column;align-items:center;justify-content:center;border-radius:7px;background:linear-gradient(135deg,#fafafa,#e8e8e8);box-shadow:0 8px 28px rgba(0,0,0,.55);opacity:.88;color:#333;font-weight:bold;transform:translate(-50%,-50%)}
-.sc{display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:6px;cursor:pointer;background:linear-gradient(135deg,#fafafa,#e8e8e8);color:#333;box-shadow:0 2px 6px rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.4);transition:transform .1s;user-select:none}
+.sc{display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:6px;cursor:grab;background:linear-gradient(135deg,#fafafa,#e8e8e8);color:#333;box-shadow:0 2px 6px rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.4);transition:transform .1s;user-select:none}
 .sc:hover{transform:translateY(-2px)}
-#rp{flex:1;min-width:280px;max-width:440px;background:rgba(0,0,0,.3);border-radius:10px;border:1px solid #3a5a3a;padding:14px}
+#rp{flex:1;min-width:340px;max-width:560px;background:rgba(0,0,0,.3);border-radius:10px;border:1px solid #3a5a3a;padding:14px}
 #rp h3{font-size:14px;color:#ffd700;margin-bottom:10px;display:flex;align-items:center}
 .cbs{display:flex;gap:8px;margin-left:auto}
 .cb{padding:4px 10px;border:1px solid #456;background:rgba(255,255,255,.08);color:#ccc;border-radius:6px;cursor:pointer;font-size:12px}
 .cb:hover{background:rgba(255,255,255,.18);color:#fff}
-#ct{width:100%;border-collapse:collapse;font-size:12px}
-#ct th{background:rgba(50,80,130,.6);padding:5px 8px;text-align:center;color:#bcd}
-#ct td{padding:4px 8px;border-bottom:1px solid rgba(255,255,255,.06);text-align:center}
+#ct{width:100%;border-collapse:collapse;font-size:11px}
+#ct th{background:rgba(50,80,130,.6);padding:5px 6px;text-align:center;color:#bcd}
+#ct td{padding:4px 6px;border-bottom:1px solid rgba(255,255,255,.06);text-align:center}
 #ct tr:hover td{background:rgba(255,255,255,.04)}
+.fp-col{color:#e67e22;font-size:10px}
+.fp2-col{color:#3498db;font-size:10px}
 #cs{margin-top:10px;font-size:12px;color:#888;padding-top:8px;border-top:1px solid #333}
 #toast{position:fixed;top:74px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.88);color:#fff;padding:10px 22px;border-radius:10px;font-size:13px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:200000;border:1px solid rgba(255,255,255,.1);white-space:nowrap}
 #toast.show{opacity:1}#toast.err{color:#ff6b6b}#toast.ok{color:#2ecc71}
@@ -62,20 +64,41 @@ canvas{display:block}
   <button class="tb" onclick="shareLevel()" style="background:linear-gradient(180deg,#3498db,#2980b9);color:#fff">🔗 分享</button>
   <span id="cnr" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"></span>
 </div>
+
 <div id="main">
   <div id="lp">
-    <div id="sa"><h3>待放入卡牌（左键拿起 / 持牌时移至此处松开退回）</h3><div id="sc"></div></div>
-    <div id="ops">🖱 <b>左键</b> 拿起/放置 &nbsp;|&nbsp; 🖱 <b>右键</b> 分割顶层牌(Lv&gt;1) &nbsp;|&nbsp; ⌨ <b>ESC</b> 取消</div>
+    <div id="sa">
+      <h3>待放入卡牌：按住拖拽至棋盘放置 | 将满级卡牌拖拽回此区域退回</h3>
+      <div id="sc"></div>
+    </div>
+    <div id="ops">🖱 <b>左键拖拽</b> 移动棋盘上的卡牌 &nbsp;|&nbsp; 🖱 <b>右键</b> 分割顶层牌(Lv&gt;1) &nbsp;|&nbsp; ⌨ <b>ESC</b> 取消持牌</div>
     <div id="bw"><canvas id="cv"></canvas><div id="hh"></div></div>
   </div>
+
   <div id="rp">
-    <h3>关卡配置<div class="cbs"><button class="cb" onclick="copyTable()">复制表格</button><button class="cb" onclick="copyJSON()">复制JSON</button></div></h3>
-    <table id="ct"><thead><tr><th>图案</th><th>链</th><th>等级</th><th>X</th><th>Y</th><th>Z</th></tr></thead><tbody id="cb2"></tbody></table>
+    <h3>关卡配置
+      <div class="cbs">
+        <button class="cb" onclick="copyTable()">复制表格</button>
+        <button class="cb" onclick="copyJSON()">复制JSON</button>
+      </div>
+    </h3>
+    <table id="ct">
+      <thead>
+        <tr>
+          <th>图案</th><th>链</th><th>等级</th><th>X</th><th>Y</th><th>Z</th>
+          <th class="fp-col" title="分割后不可放置的源位坐标">fp1</th>
+          <th class="fp2-col" title="子牌落点禁区坐标列表">fp2</th>
+        </tr>
+      </thead>
+      <tbody id="cb2"></tbody>
+    </table>
     <div id="cs">共 0 张牌</div>
   </div>
 </div>
+
 <div id="gh"></div>
 <div id="toast"></div>
+
 <div id="pp">
   <div id="pi">
     <div id="ph">
@@ -94,48 +117,70 @@ canvas{display:block}
     <div id="ptb"></div>
   </div>
 </div>
+
 <script>
 var CELL=44, COLS=12, ROWS=18, CW=CELL*2, CH=Math.round(CELL*2.4);
-var ICONS={A:['🌱','🌿','🍀','☘️','🌳','🌲','🎄','🏔️'],B:['💧','🫧','🌊','❄️','🧊','💎','🔮','👑'],C:['🍎','🍊','🍋','🍇','🍒','🍓','🍰','🎂'],D:['⭐','🌟','✨','💫','🔥','☀️','🌈','🎆'],E:['🐣','🐥','🐤','🐓','🦅','🦉','🦚','🐉'],F:['🪨','🧱','🏠','🏡','🏰','🏯','🗼','🌆'],G:['🌸','🌺','🌹','💐','🌷','🏵️','🌻','🌼'],H:['🍄','🌰','🍑','🧁','🎵','🎸','🎺','🎻']};
+var ICONS={
+  A:['🌱','🌿','🍀','☘️','🌳','🌲','🎄','🏔️'],B:['💧','🫧','🌊','❄️','🧊','💎','🔮','👑'],
+  C:['🍎','🍊','🍋','🍇','🍒','🍓','🍰','🎂'],D:['⭐','🌟','✨','💫','🔥','☀️','🌈','🎆'],
+  E:['🐣','🐥','🐤','🐓','🦅','🦉','🦚','🐉'],F:['🪨','🧱','🏠','🏡','🏰','🏯','🗼','🌆'],
+  G:['🌸','🌺','🌹','💐','🌷','🏵️','🌻','🌼'],H:['🍄','🌰','🍑','🧁','🎵','🎸','🎺','🎻']
+};
 var CN='ABCDEFGH';
 var CC={A:'#e74c3c',B:'#3498db',C:'#2ecc71',D:'#9b59b6',E:'#e67e22',F:'#1abc9c',G:'#e91e63',H:'#ff9800'};
 var CD={A:'#c0392b',B:'#2980b9',C:'#27ae60',D:'#8e44ad',E:'#d35400',F:'#16a085',G:'#c2185b',H:'#e65100'};
 
-var chains={}, placed=[], staging=[], nid=1, held=null, mx=0, my=0;
+/*
+  卡牌数据结构：
+  {
+    id, pos:[x,y,z], chain, level,
+    fp1: [x,y] | null,   // 此牌不可与该坐标重叠（被分割时产生的新牌的禁区，永久）
+    fp2: [[x,y],...],    // 此牌不可移动到的坐标列表（子牌落点累积）
+    parentId: id | null  // 分割时的父卡牌id（用于放置时更新父牌fp2）
+  }
+*/
+
+var chains={}, placed=[], staging=[], nid=1;
 var splitHistory=[];
+
+// held: 当前持牌
+// {id, chain, level, fp1, fp2, parentId, fromBoard, origPos}
+var held=null;
+var mx=0, my=0;
 
 var cv=document.getElementById('cv'), ctx=cv.getContext('2d');
 var hh=document.getElementById('hh'), gh=document.getElementById('gh');
 cv.width=COLS*CELL; cv.height=ROWS*CELL;
 
-// ── 链名输入行 ──────────────────────────────────────────────────────────────
-document.getElementById('nc').addEventListener('input', function() {
+// ── 链名输入行 ──
+document.getElementById('nc').addEventListener('input',function(){
   var n=Math.min(8,Math.max(1,parseInt(this.value)||3));
   var row=document.getElementById('cnr'); row.innerHTML='';
   for(var i=0;i<n;i++) row.innerHTML+='<div class="ci"><label>链'+(i+1)+':</label><input class="cni" maxlength="1" value="'+CN[i]+'"></div>';
 });
 document.getElementById('nc').dispatchEvent(new Event('input'));
 
-// ── 辅助 ────────────────────────────────────────────────────────────────────
+// ── 辅助函数 ──
 function icon(chain,level){var a=ICONS[chain]||[chain];return a[Math.min(level-1,a.length-1)];}
+
 function isTop(card){
   var cx=card.pos[0],cy=card.pos[1],cz=card.pos[2];
   for(var i=0;i<placed.length;i++){
-    var o=placed[i];
-    if(o===card||o.pos[2]<=cz) continue;
+    var o=placed[i]; if(o===card||o.pos[2]<=cz) continue;
     if(Math.abs(o.pos[0]-cx)<2&&Math.abs(o.pos[1]-cy)<2) return false;
   }
   return true;
 }
+
 function calcZ(gx,gy,skipId){
   var z=1;
   for(var i=0;i<placed.length;i++){
-    var c=placed[i];
-    if(c.id===skipId) continue;
+    var c=placed[i]; if(c.id===skipId) continue;
     if(Math.abs(c.pos[0]-gx)<2&&Math.abs(c.pos[1]-gy)<2) z=Math.max(z,c.pos[2]+1);
   }
   return z;
 }
+
 function topAt(gx,gy){
   var best=null;
   for(var i=0;i<placed.length;i++){
@@ -145,17 +190,33 @@ function topAt(gx,gy){
   }
   return best;
 }
-function canPlace(gx,gy,noPlace){
+
+// canPlace: 检查持牌是否可以放置在(gx,gy)
+// 检查 held.fp1（该牌不可与fp1位置重叠）
+// 检查 held.fp2（该牌不可移到fp2任一位置）
+function canPlace(gx,gy){
   if(gx<1||gx>COLS-1||gy<1||gy>ROWS-1) return false;
-  if(noPlace){
-    var list=Array.isArray(noPlace[0])?noPlace:[noPlace];
-    for(var i=0;i<list.length;i++) if(Math.abs(gx-list[i][0])<2&&Math.abs(gy-list[i][1])<2) return false;
+  if(!held) return false;
+  if(held.fp1){
+    if(Math.abs(gx-held.fp1[0])<2&&Math.abs(gy-held.fp1[1])<2) return false;
+  }
+  if(held.fp2&&held.fp2.length>0){
+    for(var i=0;i<held.fp2.length;i++)
+      if(Math.abs(gx-held.fp2[i][0])<2&&Math.abs(gy-held.fp2[i][1])<2) return false;
   }
   return true;
 }
+
 function bcoords(e){var r=cv.getBoundingClientRect();return[Math.round((e.clientX-r.left)/CELL),Math.round((e.clientY-r.top)/CELL)];}
 
-// ── 初始化 & 重置 ────────────────────────────────────────────────────────────
+function cloneCard(c){
+  return{id:c.id,pos:c.pos.slice(),chain:c.chain,level:c.level,
+    fp1:c.fp1?[c.fp1[0],c.fp1[1]]:null,
+    fp2:(c.fp2||[]).map(function(p){return[p[0],p[1]];}),
+    parentId:c.parentId||null};
+}
+
+// ── 初始化 & 重置 ──
 function initChains(){
   var n=Math.min(8,Math.max(1,parseInt(document.getElementById('nc').value)||3));
   var maxLv=Math.min(8,Math.max(2,parseInt(document.getElementById('ml').value)||4));
@@ -165,17 +226,20 @@ function initChains(){
   for(var i=0;i<n;i++){
     var nm=((ins[i]?ins[i].value:CN[i]).toUpperCase().trim())||CN[i];
     chains[nm]=maxLv;
+    // 从待放入区进入的满级牌：fp1=null, fp2=[]
     staging.push({id:nid++,chain:nm,level:maxLv});
   }
   renderBoard(); renderStaging(); renderConfig(); updateBtns();
   showToast('已生成 '+n+' 条合成链','ok');
 }
+
 function resetEditor(){
   if(!confirm('确定重置？将清空棋盘和待放入区块。')) return;
   chains={}; placed=[]; staging=[]; nid=1; held=null; splitHistory=[];
   ghostHide(); renderBoard(); renderStaging(); renderConfig(); updateBtns();
   showToast('已重置','ok');
 }
+
 function updateBtns(){
   var ok=staging.length===0&&placed.length>0;
   var bp=document.getElementById('btn-play');
@@ -185,7 +249,7 @@ function updateBtns(){
   bu.disabled=!uok; bu.style.opacity=uok?'1':'.4'; bu.style.cursor=uok?'pointer':'not-allowed';
 }
 
-// ── 棋盘绘制 ─────────────────────────────────────────────────────────────────
+// ── 棋盘绘制 ──
 function renderBoard(){
   ctx.clearRect(0,0,cv.width,cv.height);
   ctx.fillStyle='#2a3a2a'; ctx.fillRect(0,0,cv.width,cv.height);
@@ -197,9 +261,9 @@ function renderBoard(){
   var sorted=placed.slice().sort(function(a,b){return a.pos[2]-b.pos[2];});
   for(var i=0;i<sorted.length;i++) drawCard(sorted[i],isTop(sorted[i]));
 }
+
 function drawCard(card,top){
-  var gx=card.pos[0],gy=card.pos[1];
-  var px=gx*CELL-CW/2, py=gy*CELL-CH/2;
+  var gx=card.pos[0],gy=card.pos[1],px=gx*CELL-CW/2,py=gy*CELL-CH/2;
   var col=CC[card.chain]||'#888', dk=CD[card.chain]||'#555';
   ctx.globalAlpha=top?1:.3;
   var g=ctx.createLinearGradient(px,py,px+CW,py+CH);
@@ -217,28 +281,36 @@ function drawCard(card,top){
   ctx.globalAlpha=1;
 }
 
-// ── Ghost ────────────────────────────────────────────────────────────────────
+// ── Ghost ──
 function ghostShow(){
   if(!held){ghostHide();return;}
-  var col=CC[held.chain]||'#888', dk=CD[held.chain]||'#555';
-  var fs=Math.round(14+held.level*2.5);
-  var ico=icon(held.chain,held.level);
-  Object.assign(gh.style,{display:'flex',position:'fixed',pointerEvents:'none',zIndex:'99999',flexDirection:'column',alignItems:'center',justifyContent:'center',borderRadius:'7px',background:'linear-gradient(135deg,#fafafa,#e8e8e8)',boxShadow:'0 8px 28px rgba(0,0,0,.55)',opacity:'.88',color:'#333',fontWeight:'bold',transform:'translate(-50%,-50%)',width:CW+'px',height:CH+'px',borderLeft:'5px solid '+col,borderBottom:'7px solid '+dk,borderTop:'1px solid rgba(255,255,255,.5)',borderRight:'1px solid rgba(255,255,255,.5)',left:mx+'px',top:my+'px'});
-  gh.innerHTML='<span style="font-size:'+fs+'px;line-height:1">'+ico+'</span><span style="font-size:10px;color:#666;margin-top:3px">LV'+held.level+'</span>';
+  var col=CC[held.chain]||'#888', dk=CD[held.chain]||'#555', fs=Math.round(14+held.level*2.5);
+  Object.assign(gh.style,{display:'flex',position:'fixed',pointerEvents:'none',zIndex:'99999',
+    flexDirection:'column',alignItems:'center',justifyContent:'center',borderRadius:'7px',
+    background:'linear-gradient(135deg,#fafafa,#e8e8e8)',boxShadow:'0 8px 28px rgba(0,0,0,.55)',
+    opacity:'.88',color:'#333',fontWeight:'bold',transform:'translate(-50%,-50%)',
+    width:CW+'px',height:CH+'px',
+    borderLeft:'5px solid '+col,borderBottom:'7px solid '+dk,
+    borderTop:'1px solid rgba(255,255,255,.5)',borderRight:'1px solid rgba(255,255,255,.5)',
+    left:mx+'px',top:my+'px'});
+  gh.innerHTML='<span style="font-size:'+fs+'px;line-height:1">'+icon(held.chain,held.level)+'</span>'
+    +'<span style="font-size:10px;color:#666;margin-top:3px">LV'+held.level+'</span>';
 }
 function ghostHide(){gh.style.display='none';}
 function ghostMove(){if(held){gh.style.left=mx+'px';gh.style.top=my+'px';}}
 
-// ── 悬浮预览 ─────────────────────────────────────────────────────────────────
+// ── 悬浮预览 ──
 function showHint(gx,gy){
   if(!held){hh.style.display='none';return;}
-  var v=canPlace(gx,gy,held.noPlace);
+  var v=canPlace(gx,gy);
   var px=gx*CELL-CW/2, py=gy*CELL-CH/2;
-  Object.assign(hh.style,{display:'block',left:px+'px',top:py+'px',width:CW+'px',height:CH+'px',border:'2px dashed '+(v?'#ffd700':'#ff6b6b'),background:v?'rgba(255,215,0,.1)':'rgba(255,80,80,.1)'});
+  Object.assign(hh.style,{display:'block',left:px+'px',top:py+'px',width:CW+'px',height:CH+'px',
+    border:'2px dashed '+(v?'#ffd700':'#ff6b6b'),
+    background:v?'rgba(255,215,0,.1)':'rgba(255,80,80,.1)'});
 }
 function hideHint(){hh.style.display='none';}
 
-// ── 鼠标移动 ─────────────────────────────────────────────────────────────────
+// ── 鼠标移动 ──
 document.addEventListener('mousemove',function(e){
   mx=e.clientX; my=e.clientY; ghostMove();
   if(!held){hideHint();return;}
@@ -249,93 +321,181 @@ document.addEventListener('mousemove',function(e){
   } else {
     hideHint();
     var sr=document.getElementById('sa').getBoundingClientRect();
-    document.getElementById('sa').classList.toggle('dov',e.clientX>=sr.left&&e.clientX<=sr.right&&e.clientY>=sr.top&&e.clientY<=sr.bottom);
+    document.getElementById('sa').classList.toggle('dov',
+      e.clientX>=sr.left&&e.clientX<=sr.right&&e.clientY>=sr.top&&e.clientY<=sr.bottom);
   }
 });
 
-// ── 棋盘左键 ─────────────────────────────────────────────────────────────────
+// ── 棋盘 mousedown（拿起） ──
 cv.addEventListener('mousedown',function(e){
-  if(e.button!==0) return; e.preventDefault();
-  var gc=bcoords(e), gx=gc[0], gy=gc[1];
-  if(held){
-    if(!canPlace(gx,gy,held.noPlace)){
-      showToast(gx<1||gx>COLS-1||gy<1||gy>ROWS-1?'超出棋盘范围':'放置失败：位置禁区','err'); return;
+  if(e.button!==0||held) return;
+  e.preventDefault();
+  var gc=bcoords(e), card=topAt(gc[0],gc[1]);
+  if(!card||!isTop(card)) return;
+  // 拿起：从placed移除，进入held
+  placed=placed.filter(function(c){return c.id!==card.id;});
+  held={id:card.id,chain:card.chain,level:card.level,
+    fp1:card.fp1?[card.fp1[0],card.fp1[1]]:null,
+    fp2:(card.fp2||[]).map(function(p){return[p[0],p[1]];}),
+    parentId:card.parentId||null,
+    fromBoard:true, origPos:card.pos.slice()};
+  ghostShow(); renderBoard(); renderConfig(); updateBtns();
+});
+
+// ── 棋盘 mouseup（放置） ──
+document.addEventListener('mouseup',function(e){
+  if(!held) return;
+
+  // 检查是否在待放入区
+  var sa=document.getElementById('sa'), sr=sa.getBoundingClientRect();
+  var inStaging=e.clientX>=sr.left&&e.clientX<=sr.right&&e.clientY>=sr.top&&e.clientY<=sr.bottom;
+
+  if(inStaging){
+    // 只有满级牌可以退回
+    var maxLv=chains[held.chain]||0;
+    if(held.level<maxLv){
+      showToast('只有满级牌可以退回待放入区','err');
+      // 如果是从棋盘拿起的，放回原位
+      if(held.fromBoard){
+        placed.push({id:held.id,pos:held.origPos.slice(),chain:held.chain,level:held.level,
+          fp1:held.fp1?[held.fp1[0],held.fp1[1]]:null,
+          fp2:(held.fp2||[]).map(function(p){return[p[0],p[1]];}),
+          parentId:held.parentId});
+        renderBoard();
+      } else if(held.parentId){
+        // 分割产生的新牌取消放置 → 恢复父牌等级，弹出历史
+        var parent=placed.find(function(c){return c.id===held.parentId;});
+        if(parent) parent.level+=1;
+        if(splitHistory.length>0) splitHistory.pop();
+        renderBoard();
+      }
+    } else {
+      // 满级牌退回staging
+      if(held.fromBoard&&held.parentId){
+        // 如果这张牌有parentId（来自分割），还原父牌fp2（移除这张牌的落点）
+        // 由于不知道这张牌之前的落点（已移动），不做fp2的回退（保持fp2）
+      }
+      staging.push({id:held.id,chain:held.chain,level:held.level});
+      renderStaging();
     }
-    var z=calcZ(gx,gy,held.fromBoard?held.id:null);
-    placed.push({id:held.id,pos:[gx,gy,z],chain:held.chain,level:held.level,noPlace:(held.noPlace||[]).map(function(p){return[p[0],p[1]];})});
     held=null; ghostHide(); hideHint();
-    document.getElementById('sa').classList.remove('dov');
+    sa.classList.remove('dov');
+    renderConfig(); updateBtns();
+    return;
+  }
+
+  // 检查是否在棋盘上
+  var r=cv.getBoundingClientRect(), bx=e.clientX-r.left, by=e.clientY-r.top;
+  if(bx>=0&&bx<=cv.width&&by>=0&&by<=cv.height){
+    var gc=bcoords(e), gx=gc[0], gy=gc[1];
+    if(!canPlace(gx,gy)){
+      showToast('无法放置：位置在禁区内','err');
+      // 放回原位（如果是棋盘牌）
+      if(held.fromBoard){
+        placed.push({id:held.id,pos:held.origPos.slice(),chain:held.chain,level:held.level,
+          fp1:held.fp1?[held.fp1[0],held.fp1[1]]:null,
+          fp2:(held.fp2||[]).map(function(p){return[p[0],p[1]];}),
+          parentId:held.parentId});
+        renderBoard(); renderConfig();
+      }
+      held=null; ghostHide(); hideHint();
+      updateBtns(); return;
+    }
+
+    var skipId=held.fromBoard?held.id:null;
+    var z=calcZ(gx,gy,skipId);
+    var newCard={id:held.id,pos:[gx,gy,z],chain:held.chain,level:held.level,
+      fp1:held.fp1?[held.fp1[0],held.fp1[1]]:null,
+      fp2:(held.fp2||[]).map(function(p){return[p[0],p[1]];}),
+      parentId:held.parentId||null};
+    placed.push(newCard);
+
+    // 放置后：如果这张牌有parentId（是分割产生的新牌），更新父牌的fp2
+    if(held.parentId){
+      var parent=placed.find(function(c){return c.id===held.parentId;});
+      if(parent){
+        // 检查是否已经记录过该落点（避免重复）
+        var alreadyHas=parent.fp2.some(function(p){return p[0]===gx&&p[1]===gy;});
+        if(!alreadyHas) parent.fp2.push([gx,gy]);
+      }
+    }
+
+    held=null; ghostHide(); hideHint();
+    sa.classList.remove('dov');
     renderBoard(); renderConfig(); updateBtns();
     return;
   }
-  var card=topAt(gx,gy);
-  if(card&&isTop(card)){
-    placed=placed.filter(function(c){return c.id!==card.id;});
-    held={id:card.id,chain:card.chain,level:card.level,fromBoard:true,noPlace:null};
-    ghostShow(); renderBoard(); renderConfig(); updateBtns();
+
+  // 鼠标在棋盘外且不在待放入区 → 放回原位
+  if(held.fromBoard){
+    placed.push({id:held.id,pos:held.origPos.slice(),chain:held.chain,level:held.level,
+      fp1:held.fp1?[held.fp1[0],held.fp1[1]]:null,
+      fp2:(held.fp2||[]).map(function(p){return[p[0],p[1]];}),
+      parentId:held.parentId});
+    renderBoard(); renderConfig();
+  } else if(held.parentId){
+    // 分割新牌 → 恢复父牌等级
+    var parent2=placed.find(function(c){return c.id===held.parentId;});
+    if(parent2) parent2.level+=1;
+    if(splitHistory.length>0) splitHistory.pop();
+    renderBoard(); renderConfig();
   }
+  held=null; ghostHide(); hideHint();
+  document.getElementById('sa').classList.remove('dov');
+  updateBtns();
 });
 
-// ── 棋盘右键（分割）─────────────────────────────────────────────────────────
+// ── 右键：分割 ──
 cv.addEventListener('contextmenu',function(e){
   e.preventDefault();
-  if(held){showToast('请先放置手中的牌','err');return;}
+  if(held){showToast('请先放下手中的牌','err');return;}
   var gc=bcoords(e), card=topAt(gc[0],gc[1]);
   if(!card) return;
   if(!isTop(card)){showToast('被上层压住，无法分割','err');return;}
   if(card.level<=1){showToast('Lv.1 无法分割','err');return;}
-  // 保存历史
+
+  // 保存历史快照
   splitHistory.push({
-    placed:JSON.stringify(placed.map(function(c){return{id:c.id,pos:c.pos.slice(),chain:c.chain,level:c.level,noPlace:(c.noPlace||[]).map(function(p){return[p[0],p[1]];})}})),
+    placed:JSON.stringify(placed.map(function(c){return cloneCard(c);})),
     staging:JSON.stringify(staging.map(function(c){return{id:c.id,chain:c.chain,level:c.level};})),
     nid:nid
   });
+
   var srcPos=card.pos.slice();
-  var parentNoPlace=(card.noPlace||[]).map(function(p){return[p[0],p[1]];});
+
+  // 原牌降级，fp2不变，fp1不变
   card.level-=1;
-  // card.noPlace 不变（已继承）
-  var newNoPlace=parentNoPlace.concat([[srcPos[0],srcPos[1]]]);
+
+  // 新牌：fp1 = 原牌当前位置（不可与原牌重叠）
+  //        fp2 = []（新牌还没有子牌）
+  //        parentId = 原牌id（放置时更新原牌fp2）
   var newId=nid++;
-  held={id:newId,chain:card.chain,level:card.level,fromBoard:false,noPlace:newNoPlace};
+  held={id:newId, chain:card.chain, level:card.level,
+    fp1:[srcPos[0],srcPos[1]],   // 新牌禁区：原牌位置
+    fp2:[],
+    parentId:card.id,
+    fromBoard:false, origPos:null};
+
   ghostShow(); renderBoard(); renderConfig(); updateBtns();
-  showToast('分割完成，请放置新牌','ok');
+  showToast('分割完成，请放置新牌（禁区：原牌位置）','ok');
 });
 
-// ── 待放入区 mouseup（退回）────────────────────────────────────────────────
-document.addEventListener('mouseup',function(e){
-  if(!held) return;
-  var sa=document.getElementById('sa'),r=sa.getBoundingClientRect();
-  if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom) return;
-  if(held.noPlace&&held.noPlace.length>0){
-    // 取消分割：恢复原牌等级
-    var last=held.noPlace[held.noPlace.length-1];
-    var orig=placed.find(function(c){return c.pos[0]===last[0]&&c.pos[1]===last[1]&&c.chain===held.chain&&c.level===held.level;});
-    if(orig) orig.level+=1;
-    if(splitHistory.length>0) splitHistory.pop();
-    renderBoard();
-  } else {
-    var maxLv=chains[held.chain]||0;
-    if(held.level<maxLv){showToast('只有满级牌可以退回待放入区','err');return;}
-    staging.push({id:held.id,chain:held.chain,level:held.level});
-    renderStaging();
-  }
-  held=null; ghostHide(); hideHint();
-  sa.classList.remove('dov');
-  renderConfig(); updateBtns();
-});
-
-// ── ESC 取消持牌 ─────────────────────────────────────────────────────────────
+// ── ESC 取消 ──
 document.addEventListener('keydown',function(e){
   if(e.key!=='Escape'||!held) return;
-  if(held.noPlace&&held.noPlace.length>0){
-    var last=held.noPlace[held.noPlace.length-1];
-    var orig=placed.find(function(c){return c.pos[0]===last[0]&&c.pos[1]===last[1]&&c.chain===held.chain&&c.level===held.level;});
-    if(orig) orig.level+=1;
+  if(held.parentId&&!held.fromBoard){
+    // 取消分割新牌 → 恢复父牌等级，弹出历史
+    var parent=placed.find(function(c){return c.id===held.parentId;});
+    if(parent) parent.level+=1;
     if(splitHistory.length>0) splitHistory.pop();
     renderBoard();
-  } else {
-    staging.push({id:held.id,chain:held.chain,level:held.level});
-    renderStaging();
+  } else if(held.fromBoard){
+    // 放回原位
+    placed.push({id:held.id,pos:held.origPos.slice(),chain:held.chain,level:held.level,
+      fp1:held.fp1?[held.fp1[0],held.fp1[1]]:null,
+      fp2:(held.fp2||[]).map(function(p){return[p[0],p[1]];}),
+      parentId:held.parentId});
+    renderBoard();
   }
   held=null; ghostHide(); hideHint();
   document.getElementById('sa').classList.remove('dov');
@@ -343,7 +503,7 @@ document.addEventListener('keydown',function(e){
   showToast('已取消','ok');
 });
 
-// ── 撤销分割 ─────────────────────────────────────────────────────────────────
+// ── 撤销分割 ──
 function undoSplit(){
   if(splitHistory.length===0) return;
   if(held){showToast('请先放下手中的牌','err');return;}
@@ -356,48 +516,68 @@ function undoSplit(){
   showToast('已撤销分割','ok');
 }
 
-// ── 待放入区渲染 ─────────────────────────────────────────────────────────────
+// ── 待放入区渲染 ──
 function renderStaging(){
   var area=document.getElementById('sc'); area.innerHTML='';
   staging.forEach(function(card){
     var col=CC[card.chain]||'#888', dk=CD[card.chain]||'#555';
     var el=document.createElement('div'); el.className='sc';
-    el.title=card.chain+'链 Lv.'+card.level;
-    Object.assign(el.style,{width:'60px',height:'72px',borderLeft:'4px solid '+col,borderBottom:'6px solid '+dk,borderTop:'1px solid rgba(255,255,255,.4)',borderRight:'1px solid rgba(255,255,255,.4)'});
+    el.title=card.chain+'链 Lv.'+card.level+' (按住拖拽至棋盘)';
+    Object.assign(el.style,{width:'60px',height:'72px',
+      borderLeft:'4px solid '+col,borderBottom:'6px solid '+dk,
+      borderTop:'1px solid rgba(255,255,255,.4)',borderRight:'1px solid rgba(255,255,255,.4)'});
     var fs=Math.round(14+card.level*2);
-    el.innerHTML='<span style="font-size:'+fs+'px;line-height:1">'+icon(card.chain,card.level)+'</span><span style="font-size:10px;color:#666;margin-top:2px">LV'+card.level+'</span>';
+    el.innerHTML='<span style="font-size:'+fs+'px;line-height:1">'+icon(card.chain,card.level)+'</span>'
+      +'<span style="font-size:10px;color:#666;margin-top:2px">LV'+card.level+'</span>';
     el.addEventListener('mousedown',function(ev){
-      ev.stopPropagation(); ev.preventDefault();
-      if(held) return;
+      if(ev.button!==0||held) return;
+      ev.preventDefault(); ev.stopPropagation();
       staging=staging.filter(function(c){return c.id!==card.id;});
-      held={id:card.id,chain:card.chain,level:card.level,fromBoard:false,noPlace:null};
+      // 从待放入区来的牌：fp1=null, fp2=[], parentId=null
+      held={id:card.id,chain:card.chain,level:card.level,
+        fp1:null, fp2:[], parentId:null, fromBoard:false, origPos:null};
       ghostShow(); renderStaging();
     });
     area.appendChild(el);
   });
 }
 
-// ── 配置表 ───────────────────────────────────────────────────────────────────
+// ── 配置表（含fp1/fp2列）──
+function fmtFp1(fp1){return fp1?'('+fp1[0]+','+fp1[1]+')':'-';}
+function fmtFp2(fp2){
+  if(!fp2||fp2.length===0) return '-';
+  return fp2.map(function(p){return'('+p[0]+','+p[1]+')';}).join(' ');
+}
+
 function renderConfig(){
   var tb=document.getElementById('cb2'); tb.innerHTML='';
-  placed.slice().sort(function(a,b){return a.pos[2]-b.pos[2]||a.chain.localeCompare(b.chain)||a.level-b.level;}).forEach(function(card){
-    var col=CC[card.chain]||'#888', tr=document.createElement('tr');
-    tr.innerHTML='<td>'+icon(card.chain,card.level)+'</td><td style="color:'+col+';font-weight:bold">'+card.chain+'</td><td>Lv.'+card.level+'</td><td>'+card.pos[0]+'</td><td>'+card.pos[1]+'</td><td>'+card.pos[2]+'</td>';
-    tb.appendChild(tr);
-  });
+  placed.slice().sort(function(a,b){return a.pos[2]-b.pos[2]||a.chain.localeCompare(b.chain)||a.level-b.level;})
+    .forEach(function(card){
+      var col=CC[card.chain]||'#888', tr=document.createElement('tr');
+      tr.innerHTML='<td>'+icon(card.chain,card.level)+'</td>'
+        +'<td style="color:'+col+';font-weight:bold">'+card.chain+'</td>'
+        +'<td>Lv.'+card.level+'</td>'
+        +'<td>'+card.pos[0]+'</td><td>'+card.pos[1]+'</td><td>'+card.pos[2]+'</td>'
+        +'<td class="fp-col">'+fmtFp1(card.fp1)+'</td>'
+        +'<td class="fp2-col">'+fmtFp2(card.fp2)+'</td>';
+      tb.appendChild(tr);
+    });
   document.getElementById('cs').textContent='共 '+placed.length+' 张牌';
   updateBtns();
 }
 
-// ── 复制 ─────────────────────────────────────────────────────────────────────
+// ── 复制（不含fp1/fp2）──
 function copyTable(){
   var lines=['链\t等级\tX\tY\tZ'];
-  placed.slice().sort(function(a,b){return a.pos[2]-b.pos[2]||a.chain.localeCompare(b.chain);}).forEach(function(c){lines.push(c.chain+'\tLv.'+c.level+'\t'+c.pos[0]+'\t'+c.pos[1]+'\t'+c.pos[2]);});
-  doCopy(lines.join('\n'),'表格已复制');
+  placed.slice().sort(function(a,b){return a.pos[2]-b.pos[2]||a.chain.localeCompare(b.chain);})
+    .forEach(function(c){lines.push(c.chain+'\tLv.'+c.level+'\t'+c.pos[0]+'\t'+c.pos[1]+'\t'+c.pos[2]);});
+  doCopy(lines.join('\n'),'表格已复制（不含fp列）');
 }
 function copyJSON(){
-  var cf={};for(var ch in chains)cf[ch]=chains[ch];
-  doCopy(JSON.stringify({chains:cf,cards:placed.slice().sort(function(a,b){return a.pos[2]-b.pos[2];}).map(function(c){return{pos:c.pos.slice(),chain:c.chain,level:c.level};})},null,2),'JSON已复制');
+  var cf={}; for(var ch in chains) cf[ch]=chains[ch];
+  var obj={chains:cf,cards:placed.slice().sort(function(a,b){return a.pos[2]-b.pos[2];})
+    .map(function(c){return{pos:c.pos.slice(),chain:c.chain,level:c.level};})};
+  doCopy(JSON.stringify(obj,null,2),'JSON已复制（不含fp列）');
 }
 function doCopy(text,msg){
   navigator.clipboard.writeText(text).then(function(){showToast(msg,'ok');}).catch(function(){
@@ -405,19 +585,19 @@ function doCopy(text,msg){
   });
 }
 
-// ── 分享 ─────────────────────────────────────────────────────────────────────
+// ── 分享 ──
 function shareLevel(){
   if(placed.length===0){showToast('棋盘上没有牌','err');return;}
-  var mx=placed.filter(function(c){return c.level>=(chains[c.chain]||0);});
-  if(mx.length>0){showToast('存在满级卡牌，无法分享','err');return;}
-  var cf={};for(var ch in chains)cf[ch]=chains[ch];
+  var bad=placed.filter(function(c){return c.level>=(chains[c.chain]||0);});
+  if(bad.length>0){showToast('存在满级卡牌（'+bad[0].chain+' Lv.'+bad[0].level+'），无法分享','err');return;}
+  var cf={}; for(var ch in chains) cf[ch]=chains[ch];
   var obj={chains:cf,cards:placed.map(function(c){return{pos:c.pos.slice(),chain:c.chain,level:c.level};})};
   var b64=btoa(unescape(encodeURIComponent(JSON.stringify(obj))));
   var url='https://wzimeng.github.io/card-merge-game/?level='+encodeURIComponent(b64);
   doCopy(url,'分享链接已复制！');
 }
 
-// ── TOAST ────────────────────────────────────────────────────────────────────
+// ── Toast ──
 var tt;
 function showToast(msg,type){
   var el=document.getElementById('toast');
@@ -425,7 +605,7 @@ function showToast(msg,type){
   clearTimeout(tt); tt=setTimeout(function(){el.classList.remove('show');},2200);
 }
 
-// ════════════════ 试玩模式 ════════════════════════════════════════════════════
+// ════════ 试玩模式 ════════
 var PT=44, ptCards=[], ptProgress=0, ptChains={}, ptStash=[], ptHistory=[], ptRemMode=false;
 var ptDC=null, ptDE=null, ptSX=0, ptSY=0, ptOL=0, ptOT=0, ptOZ='';
 
@@ -447,27 +627,30 @@ function closePlay(){
   document.getElementById('ptstash').innerHTML='';
   ptCards=[]; ptStash=[]; ptHistory=[]; ptRemMode=false;
 }
-
 function ptCW(){return PT*2-4;}
 function ptCH(){return Math.round(PT*2.4);}
 function ptSz(){var mx=0,my=0;ptCards.forEach(function(c){mx=Math.max(mx,c.pos[0]);my=Math.max(my,c.pos[1]);});return[mx+3,my+3];}
-
 function ptRender(){
   var board=document.getElementById('ptb'); board.innerHTML='';
   var sz=ptSz(); board.style.width=sz[0]*PT+'px'; board.style.height=sz[1]*PT+'px';
-  var sorted=ptCards.slice().sort(function(a,b){return a.pos[2]-b.pos[2];});
-  sorted.forEach(function(card){
+  ptCards.slice().sort(function(a,b){return a.pos[2]-b.pos[2];}).forEach(function(card){
     var el=document.createElement('div');
     var cw=ptCW(),ch=ptCH(),col=CC[card.chain]||'#888',dk=CD[card.chain]||'#555';
-    var ica=ICONS[card.chain]||[card.chain], ico=ica[Math.min(card.level-1,ica.length-1)];
+    var ica=ICONS[card.chain]||[card.chain],ico=ica[Math.min(card.level-1,ica.length-1)];
     var fs=Math.round(12+card.level*2.2);
-    Object.assign(el.style,{position:'absolute',cursor:'grab',borderRadius:'6px',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',fontWeight:'bold',userSelect:'none',background:'linear-gradient(135deg,#fafafa,#e8e8e8)',borderLeft:'4px solid '+col,borderBottom:'6px solid '+dk,borderTop:'1px solid rgba(255,255,255,.4)',borderRight:'1px solid rgba(255,255,255,.4)',boxShadow:'0 2px 8px rgba(0,0,0,.3)',transition:'filter .2s',width:cw+'px',height:ch+'px',left:(card.pos[0]-1)*PT+'px',top:(card.pos[1]-1)*PT+'px',zIndex:card.pos[2]*100+card.id});
-    el.innerHTML='<span style="font-size:'+fs+'px;line-height:1">'+ico+'</span><span class="ptlv" style="font-size:9px;color:#666;margin-top:2px">LV'+card.level+'</span>';
-    el.dataset.id=card.id;
-    el.addEventListener('mousedown',ptDown);
+    Object.assign(el.style,{position:'absolute',cursor:'grab',borderRadius:'6px',display:'flex',flexDirection:'column',
+      alignItems:'center',justifyContent:'center',fontWeight:'bold',userSelect:'none',
+      background:'linear-gradient(135deg,#fafafa,#e8e8e8)',
+      borderLeft:'4px solid '+col,borderBottom:'6px solid '+dk,
+      borderTop:'1px solid rgba(255,255,255,.4)',borderRight:'1px solid rgba(255,255,255,.4)',
+      boxShadow:'0 2px 8px rgba(0,0,0,.3)',transition:'filter .2s',
+      width:cw+'px',height:ch+'px',
+      left:(card.pos[0]-1)*PT+'px',top:(card.pos[1]-1)*PT+'px',zIndex:card.pos[2]*100+card.id});
+    el.innerHTML='<span style="font-size:'+fs+'px;line-height:1">'+ico+'</span>'
+      +'<span class="ptlv" style="font-size:9px;color:#666;margin-top:2px">LV'+card.level+'</span>';
+    el.dataset.id=card.id; el.addEventListener('mousedown',ptDown);
     board.appendChild(el); card.el=el;
-  });
-  ptUpd();
+  }); ptUpd();
 }
 function ptLocks(){
   ptCards.forEach(function(c){
@@ -486,7 +669,6 @@ function ptSaveHist(){
   ptHistory.push({cards:JSON.stringify(ptCards.map(function(c){return{id:c.id,pos:c.pos.slice(),chain:c.chain,level:c.level};})),stash:JSON.stringify(ptStash.map(function(c){return{id:c.id,pos:c.pos.slice(),chain:c.chain,level:c.level};})),progress:ptProgress});
   if(ptHistory.length>30) ptHistory.shift();
 }
-
 function ptDown(e){
   e.preventDefault(); if(e.button!==0) return;
   var card=ptCards.find(function(c){return c.id===Number(e.currentTarget.dataset.id);});
@@ -497,8 +679,7 @@ function ptDown(e){
     ptCards=ptCards.filter(function(c){return c.id!==card.id;});
     if(card.el&&card.el.parentNode) card.el.parentNode.removeChild(card.el);
     ptStash.push({id:card.id,pos:card.pos.slice(),chain:card.chain,level:card.level,el:null});
-    ptRemMode=false;
-    document.getElementById('pt-rem-btn').style.background='linear-gradient(180deg,#f39c12,#e67e22)';
+    ptRemMode=false; document.getElementById('pt-rem-btn').style.background='linear-gradient(180deg,#f39c12,#e67e22)';
     ptRenderStash(); ptLocks(); return;
   }
   ptDC=card; ptDE=e.currentTarget; ptOZ=ptDE.style.zIndex;
@@ -512,8 +693,7 @@ function ptUp(e){
   if(!ptDC)return;
   ptDE.style.cursor='grab'; ptDE.style.transform='';
   var cw=ptCW(),ch=ptCH(),curL=parseFloat(ptDE.style.left)||0,curT=parseFloat(ptDE.style.top)||0;
-  var cx=curL+cw/2, cy=curT+ch/2;
-  var best=null,bestD=Infinity;
+  var cx=curL+cw/2,cy=curT+ch/2,best=null,bestD=Infinity;
   for(var i=0;i<ptCards.length;i++){
     var c=ptCards[i]; if(c.id===ptDC.id||c.locked||c.chain!==ptDC.chain||c.level!==ptDC.level) continue;
     var d=Math.hypot(cx-(c.pos[0]-1)*PT-cw/2,cy-(c.pos[1]-1)*PT-ch/2);
@@ -527,17 +707,16 @@ function ptUp(e){
 function ptMerge(src,tgt){
   ptCards=ptCards.filter(function(c){return c.id!==src.id;});
   if(src.el&&src.el.parentNode) src.el.parentNode.removeChild(src.el);
-  tgt.level+=1;
-  var maxLv=ptChains[tgt.chain];
+  tgt.level+=1; var maxLv=ptChains[tgt.chain];
   if(tgt.level>=maxLv){
     var el=tgt.el; if(el){
       var ica=ICONS[tgt.chain]||[tgt.chain];
       el.querySelector('span').textContent=ica[Math.min(tgt.level-1,ica.length-1)];
-      var lv=el.querySelector('.ptlv');if(lv)lv.textContent='LV'+tgt.level;
+      var lv=el.querySelector('.ptlv'); if(lv) lv.textContent='LV'+tgt.level;
       el.style.animation='ptFly .9s forwards';
       setTimeout(function(){
         ptCards=ptCards.filter(function(c){return c.id!==tgt.id;});
-        if(el.parentNode)el.parentNode.removeChild(el);
+        if(el.parentNode) el.parentNode.removeChild(el);
         ptProgress++; ptUpd(); ptLocks();
         if(ptProgress>=Object.keys(ptChains).length) setTimeout(function(){alert('恭喜通关！');},400);
       },900); return;
@@ -553,8 +732,7 @@ function ptUndo(){
   ptStash=JSON.parse(snap.stash).map(function(c){return{id:c.id,pos:c.pos,chain:c.chain,level:c.level,el:null};});
   ptProgress=snap.progress; ptRemMode=false;
   document.getElementById('pt-rem-btn').style.background='linear-gradient(180deg,#f39c12,#e67e22)';
-  ptRender(); ptRenderStash(); ptLocks(); ptUpd();
-  showToast('已撤回','ok');
+  ptRender(); ptRenderStash(); ptLocks(); ptUpd(); showToast('已撤回','ok');
 }
 function ptToggleRem(){
   ptRemMode=!ptRemMode;
@@ -577,15 +755,20 @@ function ptRenderStash(){
     var el=document.createElement('div');
     var col=CC[card.chain]||'#888',dk=CD[card.chain]||'#555';
     var ica=ICONS[card.chain]||[card.chain],ico=ica[Math.min(card.level-1,ica.length-1)];
-    Object.assign(el.style,{width:'36px',height:'44px',borderRadius:'5px',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',background:'linear-gradient(135deg,#fafafa,#e8e8e8)',borderLeft:'3px solid '+col,borderBottom:'4px solid '+dk,borderTop:'1px solid rgba(255,255,255,.4)',borderRight:'1px solid rgba(255,255,255,.4)',cursor:'grab',userSelect:'none'});
+    Object.assign(el.style,{width:'36px',height:'44px',borderRadius:'5px',display:'flex',flexDirection:'column',
+      alignItems:'center',justifyContent:'center',background:'linear-gradient(135deg,#fafafa,#e8e8e8)',
+      borderLeft:'3px solid '+col,borderBottom:'4px solid '+dk,
+      borderTop:'1px solid rgba(255,255,255,.4)',borderRight:'1px solid rgba(255,255,255,.4)',
+      cursor:'grab',userSelect:'none'});
     el.innerHTML='<span style="font-size:14px;line-height:1">'+ico+'</span><span style="font-size:8px;color:#666">LV'+card.level+'</span>';
     el.addEventListener('mousedown',function(ev){
       ev.preventDefault(); if(ev.button!==0) return;
-      ptStash=ptStash.filter(function(c){return c.id!==card.id;});
-      ptRenderStash();
-      // create ghost for stash card drag
+      ptStash=ptStash.filter(function(c){return c.id!==card.id;}); ptRenderStash();
       var gEl=document.createElement('div');
-      Object.assign(gEl.style,{position:'fixed',zIndex:'99999',pointerEvents:'none',width:'36px',height:'44px',borderRadius:'5px',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',background:'linear-gradient(135deg,#fafafa,#e8e8e8)',borderLeft:'3px solid '+col,borderBottom:'4px solid '+dk,opacity:'.85',left:ev.clientX-18+'px',top:ev.clientY-22+'px'});
+      Object.assign(gEl.style,{position:'fixed',zIndex:'99999',pointerEvents:'none',width:'36px',height:'44px',borderRadius:'5px',
+        display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',
+        background:'linear-gradient(135deg,#fafafa,#e8e8e8)',borderLeft:'3px solid '+col,borderBottom:'4px solid '+dk,
+        opacity:'.85',left:ev.clientX-18+'px',top:ev.clientY-22+'px'});
       gEl.innerHTML='<span style="font-size:14px">'+ico+'</span>';
       document.body.appendChild(gEl);
       var gSX=ev.clientX,gSY=ev.clientY,gOL=ev.clientX-18,gOT=ev.clientY-22;
@@ -610,7 +793,6 @@ function ptRenderStash(){
   });
 }
 
-// 启动
 renderBoard();
 </script>
 </body>
