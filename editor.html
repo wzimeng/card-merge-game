@@ -336,7 +336,7 @@ document.addEventListener('mousemove',e=>{
 });
 
 /* 棋盘左键 */
-cv.addEventListener('click',e=>{
+cv.addEventListener('mousedown',e=>{ if(e.button!==0) return;
   e.preventDefault();
   const[gx,gy]=bcoords(e);
 
@@ -390,18 +390,16 @@ cv.addEventListener('contextmenu',e=>{
 });
 
 /* 待放区点击：持牌时退回 */
-document.getElementById('staging-area').addEventListener('click',e=>{
-  if(e.target.classList.contains('stg-card')) return;
+document.addEventListener('mouseup',function(e){
   if(!held) return;
+  var sa=document.getElementById('staging-area');
+  var r=sa.getBoundingClientRect();
+  if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom) return;
   if(held.splitExc){
-    // 分割的新牌取消 → 原牌恢复等级
-    const orig=placed.find(c=>
-      c.chain===held.chain&&c.level===held.level&&
-      c.pos[0]===held.splitExc[0]&&c.pos[1]===held.splitExc[1]);
+    var orig=placed.find(function(c){return c.chain===held.chain&&c.level===held.level&&c.pos[0]===held.splitExc[0]&&c.pos[1]===held.splitExc[1]});
     if(orig) orig.level+=1;
     renderBoard();
   } else {
-    // 从待放区拿起的、或从棋盘拿起的 → 退回待放区
     staging.push({id:held.id,chain:held.chain,level:held.level});
     renderStaging();
   }
@@ -446,8 +444,9 @@ function renderStaging(){
     el.title=card.chain+'链 Lv.'+card.level;
     const fs=Math.round(14+card.level*2);
     el.innerHTML=`<span style="font-size:${fs}px;line-height:1">${icon(card.chain,card.level)}</span><span style="font-size:10px;color:#666;margin-top:2px">LV${card.level}</span>`;
-    el.addEventListener('click',e=>{
+    el.addEventListener('mousedown',e=>{
       e.stopPropagation();
+      e.preventDefault();
       if(held) return;
       staging=staging.filter(c=>c.id!==card.id);
       held={id:card.id,chain:card.chain,level:card.level,fromBoard:false,splitExc:null};
