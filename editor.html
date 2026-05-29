@@ -66,7 +66,7 @@ canvas{display:block;cursor:crosshair}
   <input class="init-input" id="max-level" type="number" min="2" max="8" value="4">
   <button class="top-btn" id="btn-confirm" onclick="initChains()">确认生成</button>
   <button class="top-btn" id="btn-reset" onclick="resetEditor()">重置</button>
-  <button class="top-btn" id="btn-play" onclick="startPlaytest()">▶ 试玩</button>
+  <button class="top-btn" id="btn-play" onclick="startPlaytest()">▶ 试玩</button><button class="top-btn" id="btn-undo-split" onclick="undoSplit()" disabled style="background:linear-gradient(180deg,#9b59b6,#8e44ad);color:#fff;opacity:.4;cursor:not-allowed">↩ 撤销分割</button>
   <span id="chain-names-row" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"></span>
 </div>
 <div id="main">
@@ -116,6 +116,7 @@ const CN='ABCDEFGH';
 const CC={A:'#e74c3c',B:'#3498db',C:'#2ecc71',D:'#9b59b6',E:'#e67e22',F:'#1abc9c',G:'#e91e63',H:'#ff9800'};
 const CD={A:'#c0392b',B:'#2980b9',C:'#27ae60',D:'#8e44ad',E:'#d35400',F:'#16a085',G:'#c2185b',H:'#e65100'};
 let chains={},placed=[],staging=[],nid=1,held=null,mx=0,my=0;
+let splitHistory=[];
 const cv=document.getElementById('cv'),ctx=cv.getContext('2d'),hint=document.getElementById('hover-hint'),ghost=document.getElementById('ghost');
 cv.width=COLS*CELL; cv.height=ROWS*CELL;
 
@@ -139,7 +140,11 @@ function initChains(){
 
 function resetEditor(){
   if(!confirm('确定重置？将清空棋盘和待放入区块。')) return;
-  chains={}; placed=[]; staging=[]; nid=1; held=null; ghostHide();
+  chains={}; placed=[]; staging=[]; nid=1; held=null; splitHistory=[];
+  splitHistory=[];
+  ghostHide(); renderBoard(); renderStaging(); renderConfig(); updateUndoBtn();
+  showToast('已重置','ok');
+}; placed=[]; staging=[]; nid=1; held=null; ghostHide();
   renderBoard(); renderStaging(); renderConfig();
   showToast('已重置','ok');
 }
@@ -156,7 +161,14 @@ function icon(chain,level){const arr=ICONS[chain]||[chain];return arr[Math.min(l
 function isTop(card){const[cx,cy,cz]=card.pos;for(const o of placed){if(o===card||o.pos[2]<=cz)continue;if(Math.abs(o.pos[0]-cx)<2&&Math.abs(o.pos[1]-cy)<2)return false;}return true;}
 function calcZ(gx,gy,skipId){let z=1;for(const c of placed){if(c.id===skipId)continue;if(Math.abs(c.pos[0]-gx)<2&&Math.abs(c.pos[1]-gy)<2)z=Math.max(z,c.pos[2]+1);}return z;}
 function topCardAt(gx,gy){let best=null;for(const c of placed)if(Math.abs(c.pos[0]-gx)<2&&Math.abs(c.pos[1]-gy)<2)if(!best||c.pos[2]>best.pos[2])best=c;return best;}
-function canPlace(gx,gy,splitExc){if(gx<1||gx>COLS-1||gy<1||gy>ROWS-1)return false;if(splitExc&&Math.abs(gx-splitExc[0])<2&&Math.abs(gy-splitExc[1])<2)return false;return true;}
+function canPlace(gx,gy,splitExc){
+  if(gx<1||gx>COLS-1||gy<1||gy>ROWS-1)return false;
+  if(splitExc){
+    var list=Array.isArray(splitExc[0])?splitExc:[splitExc];
+    for(var pi=0;pi<list.length;pi++){if(Math.abs(gx-list[pi][0])<2&&Math.abs(gy-list[pi][1])<2)return false;}
+  }
+  return true;
+}
 function bcoords(e){const r=cv.getBoundingClientRect();return[Math.round((e.clientX-r.left)/CELL),Math.round((e.clientY-r.top)/CELL)];}
 
 function renderBoard(){
@@ -212,7 +224,7 @@ cv.addEventListener('mousedown',e=>{
   const[gx,gy]=bcoords(e);
   if(held){
     if(!canPlace(gx,gy,held.splitExc)){showToast(gx<1||gx>COLS-1||gy<1||gy>ROWS-1?'超出棋盘范围':'放置失败：与原牌重叠','err');return;}
-    placed.push({id:held.id,pos:[gx,gy,calcZ(gx,gy,held.fromBoard?held.id:null)],chain:held.chain,level:held.level});
+    placed.push({id:held.id,pos:[gx,gy,calcZ(gx,gy,held.fromBoard?held.id:null)],chain:held.chain,level:held.level,noPlace:(held.noPlace||[]).map(p=>[...p])});
     held=null;ghostHide();hideHint();document.getElementById('staging-area').classList.remove('drag-over');renderBoard();renderConfig();return;
   }
   const card=topCardAt(gx,gy);
@@ -225,26 +237,75 @@ cv.addEventListener('contextmenu',e=>{
   if(!card)return;
   if(!isTop(card)){showToast('被上层压住，无法分割','err');return;}
   if(card.level<=1){showToast('Lv.1 无法分割','err');return;}
-  const srcPos=[...card.pos];card.level-=1;
-  held={id:nid++,chain:card.chain,level:card.level,fromBoard:false,splitExc:[srcPos[0],srcPos[1]]};
+  splitHistory.push({placed:JSON.stringify(placed.map(c=>({id:c.id,pos:[...c.pos],chain:c.chain,level:c.level,noPlace:(c.noPlace||[]).map(p=>[...p])}))),staging:JSON.stringify(staging.map(c=>({id:c.id,chain:c.chain,level:c.level}))),nid:nid});
+  updateUndoBtn();
+  const srcPos=[...card.pos];
+  const parentNoPlace=(card.noPlace||[]).map(p=>[...p]);
+  card.level-=1;
+  const newNoPlace=[...parentNoPlace,[srcPos[0],srcPos[1]]];
+  const newId=nid++;
+  held={id:newId,chain:card.chain,level:card.level,fromBoard:false,splitExc:newNoPlace,noPlace:newNoPlace};
   ghostShow();renderBoard();renderConfig();showToast('分割完成，请放置新牌','ok');
 });
 
 document.addEventListener('mouseup',function(e){
   if(!held)return;
-  const sa=document.getElementById('staging-area'),r=sa.getBoundingClientRect();
+  var sa=document.getElementById('staging-area'),r=sa.getBoundingClientRect();
   if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)return;
-  if(held.splitExc){const orig=placed.find(c=>c.chain===held.chain&&c.level===held.level&&c.pos[0]===held.splitExc[0]&&c.pos[1]===held.splitExc[1]);if(orig)orig.level+=1;renderBoard();}
-  else{staging.push({id:held.id,chain:held.chain,level:held.level});renderStaging();}
+  if(held.splitExc){
+    var excList=Array.isArray(held.splitExc[0])?held.splitExc:[held.splitExc];
+    var lastExc=excList[excList.length-1];
+    var orig=placed.find(c=>c.pos[0]===lastExc[0]&&c.pos[1]===lastExc[1]&&c.chain===held.chain&&c.level===held.level);
+    if(orig)orig.level+=1;
+    if(splitHistory.length>0)splitHistory.pop();
+    updateUndoBtn();
+    renderBoard();
+  } else {
+    var maxLv=chains[held.chain]||0;
+    if(held.level<maxLv){showToast('只有满级牌可以退回待放入区','err');return;}
+    staging.push({id:held.id,chain:held.chain,level:held.level});renderStaging();
+  }
+  held=null;ghostHide();hideHint();document.getElementById('staging-area').classList.remove('drag-over');renderConfig();
+});renderStaging();}
   held=null;ghostHide();hideHint();document.getElementById('staging-area').classList.remove('drag-over');renderConfig();
 });
 
 document.addEventListener('keydown',e=>{
   if(e.key!=='Escape'||!held)return;
-  if(held.splitExc){const orig=placed.find(c=>c.chain===held.chain&&c.level===held.level&&c.pos[0]===held.splitExc[0]&&c.pos[1]===held.splitExc[1]);if(orig)orig.level+=1;renderBoard();}
-  else{staging.push({id:held.id,chain:held.chain,level:held.level});renderStaging();}
+  if(held.splitExc){
+    var excList=Array.isArray(held.splitExc[0])?held.splitExc:[held.splitExc];
+    var lastExc=excList[excList.length-1];
+    var orig=placed.find(c=>c.pos[0]===lastExc[0]&&c.pos[1]===lastExc[1]&&c.chain===held.chain&&c.level===held.level);
+    if(orig)orig.level+=1;
+    if(splitHistory.length>0)splitHistory.pop();
+    updateUndoBtn();
+    renderBoard();
+  } else{staging.push({id:held.id,chain:held.chain,level:held.level});renderStaging();}
+  held=null;ghostHide();hideHint();document.getElementById('staging-area').classList.remove('drag-over');renderConfig();showToast('已取消','ok');
+});renderStaging();}
   held=null;ghostHide();hideHint();document.getElementById('staging-area').classList.remove('drag-over');renderConfig();showToast('已取消','ok');
 });
+
+function updateUndoBtn(){
+  var btn=document.getElementById('btn-undo-split');
+  if(!btn)return;
+  var ok=splitHistory.length>0;
+  btn.disabled=!ok;
+  btn.style.opacity=ok?'1':'.4';
+  btn.style.cursor=ok?'pointer':'not-allowed';
+}
+
+function undoSplit(){
+  if(splitHistory.length===0)return;
+  if(held){showToast('请先放下手中的牌','err');return;}
+  var snap=splitHistory.pop();
+  placed=JSON.parse(snap.placed);
+  staging=JSON.parse(snap.staging);
+  nid=snap.nid;
+  held=null;ghostHide();
+  renderBoard();renderStaging();renderConfig();updateUndoBtn();
+  showToast('已撤销分割','ok');
+}
 
 function renderStaging(){
   const area=document.getElementById('staging-cards');area.innerHTML='';
