@@ -391,6 +391,7 @@ cv.addEventListener('contextmenu',e=>{
 
 /* 待放区点击：持牌时退回 */
 document.getElementById('staging-area').addEventListener('click',e=>{
+  if(e.target.classList.contains('stg-card')) return;
   if(!held) return;
   if(held.splitExc){
     // 分割的新牌取消 → 原牌恢复等级
@@ -445,7 +446,8 @@ function renderStaging(){
     el.title=card.chain+'链 Lv.'+card.level;
     const fs=Math.round(14+card.level*2);
     el.innerHTML=`<span style="font-size:${fs}px;line-height:1">${icon(card.chain,card.level)}</span><span style="font-size:10px;color:#666;margin-top:2px">LV${card.level}</span>`;
-    el.addEventListener('click',()=>{
+    el.addEventListener('click',e=>{
+      e.stopPropagation();
       if(held) return;
       staging=staging.filter(c=>c.id!==card.id);
       held={id:card.id,chain:card.chain,level:card.level,fromBoard:false,splitExc:null};
