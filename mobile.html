@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>卡牌合成</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{width:100%;height:100%;overflow:hidden;background:#1a3a1a;font-family:'PingFang SC','Microsoft YaHei',sans-serif;user-select:none;-webkit-user-select:none;touch-action:none}
+
+/* ===== 主页 ===== */
+#home{position:fixed;inset:0;z-index:400000;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden}
+#home.hidden{display:none}
+.home-bg{position:absolute;inset:0}
+.sky{position:absolute;top:0;left:0;right:0;height:58%;background:linear-gradient(180deg,#87CEEB,#B0E0FF 60%,#FFE4B5)}
+.sun{position:absolute;top:8%;right:12%;width:64px;height:64px;background:radial-gradient(circle,#FFD700,#FFA500);border-radius:50%;box-shadow:0 0 30px rgba(255,215,0,.6);animation:sunG 3s ease-in-out infinite}
+@keyframes sunG{0%,100%{box-shadow:0 0 30px rgba(255,215,0,.6)}50%{box-shadow:0 0 50px rgba(255,215,0,.85)}}
+.cloud{position:absolute;background:#fff;border-radius:40px;opacity:.9;animation:cfl linear infinite}
+.cloud::before,.cloud::after{content:'';position:absolute;background:#fff;border-radius:50%}
+.cloud::before{width:50%;height:150%;top:-50%;left:20%}
+.cloud::after{width:40%;height:120%;top:-30%;left:55%}
+.c1{top:10%;left:-15%;width:90px;height:30px;animation-duration:22s}
+.c2{top:22%;left:40%;width:70px;height:24px;animation-duration:30s;animation-delay:-12s}
+.c3{top:6%;left:65%;width:80px;height:28px;animation-duration:26s;animation-delay:-18s}
+@keyframes cfl{0%{transform:translateX(0)}100%{transform:translateX(calc(100vw + 160px))}}
+.ground{position:absolute;bottom:0;left:0;right:0;height:46%}
+.h1{position:absolute;bottom:0;left:-5%;width:50%;height:100%;background:radial-gradient(ellipse at bottom,#4CAF50,#388E3C);border-radius:50% 50% 0 0}
+.h2{position:absolute;bottom:0;right:-8%;width:52%;height:80%;background:radial-gradient(ellipse at bottom,#66BB6A,#43A047);border-radius:50% 50% 0 0}
+.h3{position:absolute;bottom:0;left:28%;width:46%;height:60%;background:radial-gradient(ellipse at bottom,#81C784,#4CAF50);border-radius:50% 50% 0 0}
+.grass{position:absolute;bottom:0;left:0;right:0;height:7%;background:linear-gradient(180deg,#4CAF50,#388E3C)}
+.fl{position:absolute;width:10px;height:10px;border-radius:50%;bottom:5%}
+.f1{left:12%;background:#FF6B6B}.f2{left:30%;background:#FFD93D}.f3{left:52%;background:#FF8CC6}.f4{left:72%;background:#6BCB77}.f5{left:22%;background:#9B59B6}.f6{left:62%;background:#E74C3C}
+.home-content{position:relative;z-index:1;text-align:center;padding:0 20px}
+.home-content h1{font-size:36px;color:#fff;text-shadow:0 2px 10px rgba(0,0,0,.4);margin-bottom:6px;letter-spacing:4px}
+.home-content p{color:rgba(255,255,255,.85);font-size:13px;margin-bottom:28px}
+.start-btn{padding:15px 55px;border:none;border-radius:14px;background:linear-gradient(180deg,#FFD700,#FFA500);color:#333;font-size:19px;font-weight:bold;letter-spacing:2px;box-shadow:0 6px 20px rgba(255,165,0,.5),inset 0 2px 0 rgba(255,255,255,.4)}
+
+/* ===== 关卡选择 ===== */
+#menu{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:300000;background:linear-gradient(135deg,#1a3a1a,#2a5a2a,#1a3a1a);padding:20px}
+#menu.hidden{display:none}
+#menu h1{color:#ffd700;font-size:26px;margin-bottom:6px}
+#menu p{color:rgba(255,255,255,.6);font-size:13px;margin-bottom:20px}
+.level-list{display:flex;flex-direction:column;gap:14px;width:100%;max-width:320px}
+.level-card{padding:16px 18px;border-radius:14px;background:rgba(255,255,255,.09);border:2px solid rgba(255,255,255,.15);text-align:left;display:flex;align-items:center;gap:14px}
+.level-card.locked{opacity:.4;pointer-events:none}
+.level-card h3{color:#fff;font-size:16px;margin-bottom:4px}
+.level-card .lc-info{color:rgba(255,255,255,.65);font-size:11px}
+.level-card .lc-diff{display:inline-block;margin-top:6px;padding:2px 10px;border-radius:8px;font-size:11px;font-weight:bold}
+.lc-icon{font-size:28px;flex-shrink:0}
+.diff-easy{background:#27ae60;color:#fff}.diff-hard{background:#e74c3c;color:#fff}
+.back-btn{margin-top:18px;padding:10px 28px;border:1px solid rgba(255,255,255,.3);background:transparent;color:rgba(255,255,255,.8);border-radius:10px;font-size:14px}
+
+/* ===== 游戏界面 ===== */
+#header{position:fixed;top:0;left:0;right:0;height:54px;background:linear-gradient(180deg,rgba(0,0,0,.75),rgba(0,0,0,.4));display:flex;align-items:center;justify-content:center;z-index:10000;gap:10px;backdrop-filter:blur(6px);padding:0 12px;padding-top:env(safe-area-inset-top,0)}
+#header.hidden{display:none}
+#level-badge{color:rgba(255,255,255,.9);font-size:12px;background:rgba(255,255,255,.15);padding:5px 10px;border-radius:10px;border:1px solid rgba(255,255,255,.2);white-space:nowrap;flex-shrink:0}
+#progress-wrap{flex:1;display:flex;align-items:center;gap:8px;min-width:0}
+#progress-text{color:#fff;font-size:12px;font-weight:bold;white-space:nowrap;flex-shrink:0}
+#progress-container{flex:1;height:18px;background:rgba(0,0,0,.5);border-radius:9px;border:2px solid rgba(255,255,255,.3);overflow:hidden;min-width:60px}
+#progress-bar{height:100%;width:0%;background:linear-gradient(90deg,#ffd700,#ffaa00,#ffd700);background-size:200% 100%;animation:shimmer 2s infinite;border-radius:7px;transition:width .6s cubic-bezier(.34,1.56,.64,1)}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+/* ===== 棋盘区域（可滚动）===== */
+#board-container{position:fixed;left:0;right:0;overflow:auto;background:linear-gradient(180deg,#3a6a32,#2a5a27);border-radius:0;-webkit-overflow-scrolling:touch}
+#board-container.hidden{display:none}
+#board{position:relative;background:radial-gradient(ellipse at center,rgba(255,255,255,.03) 0%,transparent 70%)}
+
+/* ===== 卡牌 ===== */
+.card{position:absolute;border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:bold;border:1px solid rgba(255,255,255,.5);border-left-width:4px;border-bottom-width:6px;background:linear-gradient(135deg,#fafafa,#f0f0f0,#e8e8e8);color:#333;box-shadow:0 2px 6px rgba(0,0,0,.25),inset 0 1px 0 rgba(255,255,255,.8);z-index:1;transition:filter .2s}
+.card::before{content:'';position:absolute;top:3px;left:3px;right:3px;bottom:3px;border:1px solid rgba(0,0,0,.06);border-radius:3px;pointer-events:none}
+.card .card-icon{line-height:1}
+.card-lv{font-size:9px;color:#888;margin-top:2px;font-weight:bold}
+.card.locked{filter:brightness(.4) saturate(.5)}
+.card.dragging{z-index:9999!important;box-shadow:0 10px 28px rgba(0,0,0,.4);transform:scale(1.1) rotate(1.5deg);filter:none}
+.chain-A{border-left-color:#e74c3c;border-bottom-color:#c0392b}
+.chain-B{border-left-color:#3498db;border-bottom-color:#2980b9}
+.chain-C{border-left-color:#2ecc71;border-bottom-color:#27ae60}
+.chain-D{border-left-color:#9b59b6;border-bottom-color:#8e44ad}
+.chain-E{border-left-color:#e67e22;border-bottom-color:#d35400}
+.chain-F{border-left-color:#1abc9c;border-bottom-color:#16a085}
+@keyframes flyUp{0%{transform:scale(1.1);opacity:1;filter:brightness(1.5)}30%{transform:scale(1.3) rotate(-5deg)}100%{transform:scale(.1) translateY(-350px) rotate(10deg);opacity:0}}
+.flying{animation:flyUp .9s cubic-bezier(.25,.46,.45,.94) forwards;pointer-events:none;z-index:999999!important}
+@keyframes glow{0%{box-shadow:0 0 0 0 rgba(255,215,0,.9)}50%{box-shadow:0 0 22px 10px rgba(255,215,0,.5)}100%{box-shadow:0 0 14px 6px rgba(255,215,0,.3)}}
+.max-level-glow{animation:glow .5s ease-out forwards}
+@keyframes hp{0%,100%{box-shadow:0 0 8px 4px rgba(255,215,0,.8)}50%{box-shadow:0 0 14px 7px rgba(255,215,0,.4)}}
+.hint-src{animation:hp 1s ease-in-out infinite;outline:3px solid #ffd700;outline-offset:2px;z-index:9999!important}
+.hint-tgt{animation:hp 1s ease-in-out infinite;outline:3px solid #ff6b6b;outline-offset:2px;z-index:9999!important}
+
+/* ===== 底部工具栏 ===== */
+#toolbar{position:fixed;bottom:0;left:0;right:0;background:linear-gradient(0deg,rgba(0,0,0,.88),rgba(0,0,0,.5));display:flex;align-items:center;justify-content:space-around;padding:8px 8px calc(8px + env(safe-area-inset-bottom,0));z-index:10000;gap:6px}
+#toolbar.hidden{display:none}
+.tool-btn{flex:1;max-width:68px;padding:8px 4px;border:none;border-radius:10px;background:linear-gradient(180deg,#f39c12,#e67e22);color:#fff;font-size:11px;font-weight:bold;display:flex;flex-direction:column;align-items:center;gap:2px;line-height:1.2}
+.tool-btn .t-icon{font-size:18px}
+.tool-btn.active{background:linear-gradient(180deg,#e74c3c,#c0392b)}
+#stash-wrap{flex:1;display:flex;gap:4px;align-items:center;background:rgba(255,255,255,.08);padding:5px 6px;border-radius:10px;min-height:50px;border:1px dashed rgba(255,255,255,.25);overflow:hidden;max-width:160px}
+#stash-wrap.highlight{background:rgba(255,215,0,.15);border-color:rgba(255,215,0,.4)}
+#stash-area{display:flex;gap:3px;align-items:center}
+#stash-area .card{position:relative!important;flex-shrink:0;width:36px!important;height:45px!important;border-left-width:3px!important;border-bottom-width:4px!important}
+#stash-area .card .card-icon{font-size:14px!important}
+#stash-area .card-lv{display:none}
+
+/* ===== Toast ===== */
+#toast{position:fixed;top:64px;left:50%;transform:translateX(-50%) translateY(-8px);background:rgba(0,0,0,.85);color:#fff;padding:9px 18px;border-radius:10px;font-size:13px;pointer-events:none;opacity:0;transition:all .3s;z-index:100000;border:1px solid rgba(255,255,255,.12);white-space:nowrap;max-width:80vw;overflow:hidden;text-overflow:ellipsis}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#toast.success{color:#2ecc71}#toast.error{color:#ff6b6b}
+
+/* ===== 弹窗 ===== */
+#modal{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;z-index:200000;backdrop-filter:blur(4px)}
+#modal.show{display:flex}
+.modal-content{background:linear-gradient(180deg,#fff,#f5f5f5);padding:28px 24px;border-radius:18px;text-align:center;max-width:85vw;width:100%;box-shadow:0 16px 50px rgba(0,0,0,.4);animation:mpop .4s cubic-bezier(.34,1.56,.64,1)}
+@keyframes mpop{0%{transform:scale(.5);opacity:0}100%{transform:scale(1);opacity:1}}
+.modal-content h2{color:#e74c3c;margin-bottom:8px;font-size:22px}
+.modal-content p{color:#666;margin-bottom:16px;font-size:13px}
+.modal-btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.modal-btn{padding:11px 22px;border:none;color:#fff;font-size:14px;font-weight:bold;border-radius:10px;min-width:100px}
+.btn-primary{background:linear-gradient(180deg,#27ae60,#1e8449)}
+.btn-secondary{background:linear-gradient(180deg,#3498db,#2980b9)}
+</style>
+</head>
+<body>
+
+<!-- 主页 -->
+<div id="home">
+  <div class="home-bg"><div class="sky"></div><div class="sun"></div><div class="cloud c1"></div><div class="cloud c2"></div><div class="cloud c3"></div><div class="ground"><div class="h1"></div><div class="h2"></div><div class="h3"></div><div class="grass"></div></div><div class="fl f1"></div><div class="fl f2"></div><div class="fl f3"></div><div class="fl f4"></div><div class="fl f5"></div><div class="fl f6"></div></div>
+  <div class="home-content"><h1>卡牌合成</h1><p>合成所有卡牌，完成挑战！</p><button class="start-btn" onclick="showMenu()">开始游戏</button></div>
+</div>
+
+<!-- 关卡选择 -->
+<div id="menu" class="hidden">
+  <h1>选择关卡</h1><p>通关后解锁下一关</p>
+  <div class="level-list" id="level-list"></div>
+  <div id="custom-level-card" style="display:none;margin-top:14px;width:100%;max-width:320px">
+    <div class="level-card" onclick="startLevel('custom')" style="border-color:#ffd700">
+      <div class="lc-icon">🔗</div>
+      <div><h3 style="color:#ffd700">自定义关卡</h3><div class="lc-info" id="custom-level-desc">由玩家分享</div><span class="lc-diff" style="background:#3498db;color:#fff">挑战</span></div>
+    </div>
+  </div>
+  <button class="back-btn" onclick="showHome()">返回主页</button>
+</div>
+
+<!-- 游戏界面 -->
+<div id="header" class="hidden">
+  <div id="level-badge" onclick="backToMenu()">← 选关</div>
+  <div id="progress-wrap">
+    <span id="progress-text">0/3</span>
+    <div id="progress-container"><div id="progress-bar"></div></div>
+  </div>
+</div>
+<div id="board-container" class="hidden"><div id="board"></div></div>
+<div id="toolbar" class="hidden">
+  <button class="tool-btn" onclick="useUndo()"><span class="t-icon">↩</span>撤回</button>
+  <button class="tool-btn" id="btn-remove" onclick="useRemove()"><span class="t-icon">📤</span>移出</button>
+  <button class="tool-btn" onclick="useShuffle()"><span class="t-icon">🔀</span>打乱</button>
+  <button class="tool-btn" id="btn-hint" onclick="toggleHint()"><span class="t-icon">💡</span>攻略</button>
+  <div id="stash-wrap"><div id="stash-area"></div></div>
+</div>
+<div id="toast"></div>
+<div id="modal"><div class="modal-content"><h2 id="modal-title"></h2><p id="modal-text"></p><div class="modal-btns" id="modal-btns"></div></div></div>
+
+<script>
+var ICONS={A:['🌱','🌿','🍀','☘️','🌳','🌲','🎄','🏔️'],B:['💧','🫧','🌊','❄️','🧊','💎','🔮','👑'],C:['🍎','🍊','🍋','🍇','🍒','🍓','🍰','🎂'],D:['⭐','🌟','✨','💫','🔥','☀️','🌈','🎆'],E:['🐣','🐥','🐤','🐓','🦅','🦉','🦚','🐉'],F:['🪨','🧱','🏠','🏡','🏰','🏯','🗼','🌆']};
+var LEVELS={
+1:{name:'第一关',diff:'入门',diffCls:'diff-easy',icon:'🌟',chains:{A:4,B:4,C:4},boardW:8,boardH:10,unit:46,
+  desc:'3条链 · 满级4级 · 18张',
+  cards:[{pos:[1,1,1],chain:'A',level:2},{pos:[1,3,1],chain:'B',level:2},{pos:[1,5,1],chain:'C',level:1},{pos:[1,7,1],chain:'C',level:1},{pos:[3,1,1],chain:'B',level:1},{pos:[3,3,1],chain:'B',level:2},{pos:[3,5,1],chain:'C',level:1},{pos:[3,7,1],chain:'C',level:1},{pos:[5,1,1],chain:'A',level:1},{pos:[5,3,1],chain:'A',level:1},{pos:[5,5,1],chain:'C',level:3},{pos:[5,7,1],chain:'B',level:1},{pos:[2,2,2],chain:'A',level:1},{pos:[2,4,2],chain:'A',level:1},{pos:[2,6,2],chain:'B',level:1},{pos:[4,2,2],chain:'A',level:1},{pos:[4,4,2],chain:'A',level:1},{pos:[4,6,2],chain:'B',level:1}],
+  guide:[{src:[2,2,2],tgt:[2,4,2],chain:'A',level:1},{src:[4,2,2],tgt:[4,4,2],chain:'A',level:1},{src:[5,1,1],tgt:[5,3,1],chain:'A',level:1},{src:[5,3,1],tgt:[1,1,1],chain:'A',level:2},{src:[2,4,2],tgt:[4,4,2],chain:'A',level:2},{src:[4,4,2],tgt:[1,1,1],chain:'A',level:3},{src:[2,6,2],tgt:[4,6,2],chain:'B',level:1},{src:[3,1,1],tgt:[5,7,1],chain:'B',level:1},{src:[4,6,2],tgt:[1,3,1],chain:'B',level:2},{src:[5,7,1],tgt:[3,3,1],chain:'B',level:2},{src:[1,3,1],tgt:[3,3,1],chain:'B',level:3},{src:[1,5,1],tgt:[1,7,1],chain:'C',level:1},{src:[3,5,1],tgt:[3,7,1],chain:'C',level:1},{src:[1,7,1],tgt:[3,7,1],chain:'C',level:2},{src:[3,7,1],tgt:[5,5,1],chain:'C',level:3}]},
+2:{name:'第二关',diff:'挑战',diffCls:'diff-hard',icon:'🔥',chains:{A:6,B:6,C:6,D:6},boardW:14,boardH:16,unit:36,
+  desc:'4条链 · 满级6级 · 62张',
+  cards:[{pos:[2,3,1],chain:'A',level:3},{pos:[10,3,1],chain:'B',level:2},{pos:[10,6,1],chain:'A',level:2},{pos:[2,6,1],chain:'B',level:2},{pos:[4,6,1],chain:'A',level:2},{pos:[8,3,1],chain:'A',level:2},{pos:[6,3,1],chain:'A',level:2},{pos:[6,6,1],chain:'A',level:1},{pos:[4,3,1],chain:'B',level:3},{pos:[8,6,1],chain:'B',level:2},{pos:[6,1,1],chain:'C',level:2},{pos:[10,7,2],chain:'B',level:2},{pos:[10,2,2],chain:'B',level:1},{pos:[2,2,2],chain:'B',level:3},{pos:[6,6,2],chain:'B',level:1},{pos:[2,5,2],chain:'B',level:2},{pos:[10,5,2],chain:'B',level:2},{pos:[4,4,2],chain:'C',level:2},{pos:[8,3,2],chain:'D',level:3},{pos:[10,8,3],chain:'A',level:2},{pos:[2,1,3],chain:'A',level:1},{pos:[10,1,3],chain:'A',level:2},{pos:[6,6,3],chain:'A',level:1},{pos:[2,4,3],chain:'A',level:2},{pos:[5,3,3],chain:'D',level:2},{pos:[9,8,4],chain:'B',level:2},{pos:[3,1,4],chain:'C',level:3},{pos:[6,5,4],chain:'C',level:2},{pos:[9,1,4],chain:'C',level:3},{pos:[2,3,4],chain:'D',level:2},{pos:[4,4,4],chain:'B',level:1},{pos:[8,8,5],chain:'A',level:1},{pos:[8,1,5],chain:'D',level:3},{pos:[2,4,5],chain:'C',level:2},{pos:[4,1,5],chain:'D',level:3},{pos:[5,4,5],chain:'C',level:1},{pos:[7,8,6],chain:'B',level:2},{pos:[9,7,6],chain:'C',level:1},{pos:[9,1,6],chain:'D',level:3},{pos:[6,3,6],chain:'C',level:1},{pos:[4,3,6],chain:'D',level:1},{pos:[5,5,6],chain:'D',level:1},{pos:[3,5,6],chain:'D',level:2},{pos:[6,8,7],chain:'A',level:1},{pos:[8,6,7],chain:'A',level:2},{pos:[8,1,7],chain:'D',level:2},{pos:[5,2,7],chain:'C',level:2},{pos:[5,8,8],chain:'A',level:1},{pos:[7,5,8],chain:'B',level:1},{pos:[9,5,8],chain:'A',level:2},{pos:[7,2,8],chain:'C',level:1},{pos:[4,8,9],chain:'C',level:3},{pos:[6,7,9],chain:'C',level:1},{pos:[9,6,9],chain:'D',level:2},{pos:[6,3,9],chain:'D',level:2},{pos:[3,8,10],chain:'B',level:3},{pos:[7,7,10],chain:'D',level:1},{pos:[9,5,10],chain:'C',level:1},{pos:[5,7,10],chain:'D',level:1},{pos:[9,7,10],chain:'C',level:2},{pos:[2,8,11],chain:'A',level:3},{pos:[6,6,11],chain:'C',level:1},{pos:[3,7,12],chain:'C',level:1}]}
+};
+
+var TOTAL_LEVELS=2;
+var unlocked={1:true,2:false};
+var currentLevel=null,UNIT=40,CARD_W,CARD_H,CHAINS={};
+var cardsData=[],stashCards=[],progress=0,historyStack=[],toolMode=null;
+var dragCard=null,dragIsStash=false,dragEl=null;
+var dragStartX=0,dragStartY=0,dragStartL=0,dragStartT=0,dragOrigZ='';
+var board=document.getElementById('board');
+var stashArea=document.getElementById('stash-area');
+var stashWrap=document.getElementById('stash-wrap');
+var toastEl=document.getElementById('toast');
+var guideMode=false,guideStep=0;
+
+// 计算布局
+var VW=window.innerWidth, VH=window.innerHeight;
+var HEADER_H=54, TOOLBAR_H=64+20; // 含安全区估算
+
+function showHome(){document.getElementById('home').classList.remove('hidden');document.getElementById('menu').classList.add('hidden');document.getElementById('header').classList.add('hidden');document.getElementById('board-container').classList.add('hidden');document.getElementById('toolbar').classList.add('hidden');document.getElementById('modal').classList.remove('show')}
+function showMenu(){document.getElementById('home').classList.add('hidden');document.getElementById('menu').classList.remove('hidden');document.getElementById('header').classList.add('hidden');document.getElementById('board-container').classList.add('hidden');document.getElementById('toolbar').classList.add('hidden');renderLevelList()}
+function backToMenu(){showMenu()}
+
+function renderLevelList(){
+  var ll=document.getElementById('level-list');ll.innerHTML='';
+  for(var i=1;i<=TOTAL_LEVELS;i++){
+    var lv=LEVELS[i];var locked=!unlocked[i];
+    var card=document.createElement('div');card.className='level-card'+(locked?' locked':'');
+    if(!locked)card.onclick=(function(n){return function(){startLevel(n)}})(i);
+    card.innerHTML='<div class="lc-icon">'+(locked?'🔒':lv.icon)+'</div><div><h3>'+lv.name+'</h3><div class="lc-info">'+lv.desc+'</div><span class="lc-diff '+lv.diffCls+'">'+lv.diff+'</span></div>';
+    ll.appendChild(card);
+  }
+}
+
+function startLevel(num){
+  var cfg=LEVELS[num];if(!cfg){showToast('关卡不存在','error');return;}
+  currentLevel=num;CHAINS=cfg.chains;
+  // 手机端动态计算UNIT：棋盘宽度适配屏幕
+  var availW=VW-4, availH=VH-HEADER_H-TOOLBAR_H-4;
+  var unitByW=Math.floor(availW/(cfg.boardW));
+  var unitByH=Math.floor(availH/(cfg.boardH));
+  UNIT=Math.min(unitByW,unitByH,cfg.unit||50);
+  UNIT=Math.max(UNIT,28);
+  CARD_W=Math.round(UNIT*2-4); CARD_H=Math.round(UNIT*2.4);
+  var bw=cfg.boardW*UNIT, bh=cfg.boardH*UNIT;
+  var bc=document.getElementById('board-container');
+  bc.style.top=HEADER_H+'px'; bc.style.bottom=TOOLBAR_H+'px';
+  bc.style.left='0'; bc.style.right='0';
+  board.style.width=bw+'px'; board.style.height=bh+'px';
+  var id=1;
+  cardsData=cfg.cards.map(function(c){return{id:id++,pos:[c.pos[0],c.pos[1],c.pos[2]],chain:c.chain,level:c.level,el:null,locked:false}});
+  stashCards=[];progress=0;historyStack=[];toolMode=null;guideStep=0;guideMode=false;
+  document.getElementById('menu').classList.add('hidden');
+  document.getElementById('header').classList.remove('hidden');
+  document.getElementById('board-container').classList.remove('hidden');
+  document.getElementById('toolbar').classList.remove('hidden');
+  document.getElementById('level-badge').textContent='← '+cfg.name;
+  document.getElementById('btn-hint').classList.remove('active');
+  saveState();renderAll();recalcLocks();
+  // 居中棋盘滚动
+  setTimeout(function(){var bc2=document.getElementById('board-container');bc2.scrollLeft=(bw-VW)/2;bc2.scrollTop=0;},50);
+}
+
+function icon(ch,lv){var a=ICONS[ch]||[ch];return a[Math.min(lv-1,a.length-1)];}
+function iconSize(lv){var base=UNIT*0.44;return Math.round(base*(1+(lv-1)*0.14));}
+function buildCardHTML(ch,lv){return '<div class="card-icon" style="font-size:'+iconSize(lv)+'px">'+icon(ch,lv)+'</div><div class="card-lv">LV'+lv+'</div>';}
+
+function renderAll(){
+  board.innerHTML='';
+  cardsData.slice().sort(function(a,b){return a.pos[2]-b.pos[2];}).forEach(function(card){
+    var el=document.createElement('div');el.className='card chain-'+card.chain;el.dataset.id=card.id;
+    el.style.width=CARD_W+'px';el.style.height=CARD_H+'px';
+    el.innerHTML=buildCardHTML(card.chain,card.level);
+    el.style.left=((card.pos[0]-1)*UNIT)+'px';el.style.top=((card.pos[1]-1)*UNIT)+'px';
+    el.style.zIndex=card.pos[2]*10000+card.pos[1]*100+(99-card.pos[0]);
+    el.addEventListener('touchstart',onDown,{passive:false});
+    board.appendChild(el);card.el=el;
+  });
+  renderStash();updateProgress();
+}
+function renderStash(){
+  stashArea.innerHTML='';
+  stashCards.forEach(function(card){
+    var el=document.createElement('div');el.className='card chain-'+card.chain;el.dataset.id=card.id;el.dataset.stash='1';
+    el.innerHTML='<div class="card-icon" style="font-size:14px">'+icon(card.chain,card.level)+'</div>';
+    el.style.position='relative';el.style.left='';el.style.top='';
+    stashArea.appendChild(el);card.el=el;
+    el.addEventListener('touchstart',onDown,{passive:false});
+  });
+}
+function recalcLocks(){cardsData.forEach(function(c){var lk=false;for(var i=0;i<cardsData.length;i++){var o=cardsData[i];if(o===c||o.pos[2]<=c.pos[2])continue;if(Math.abs(o.pos[0]-c.pos[0])<2&&Math.abs(o.pos[1]-c.pos[1])<2){lk=true;break}}c.locked=lk;if(c.el)c.el.classList.toggle('locked',lk)})}
+
+// 触摸拖拽
+function onDown(e){
+  e.preventDefault();e.stopPropagation();
+  var el=e.currentTarget;var id=Number(el.dataset.id);var isStash=el.dataset.stash==='1';
+  var card=isStash?stashCards.find(function(c){return c.id===id}):cardsData.find(function(c){return c.id===id});
+  if(!card)return;
+  if(toolMode==='remove'&&!isStash){
+    if(card.locked){showToast('上锁的牌不能移出','error');return}
+    if(stashCards.length>=5){showToast('暂存区已满','error');return}
+    cardsData=cardsData.filter(function(c){return c.id!==id});stashCards.push(card);toolMode=null;
+    document.getElementById('btn-remove').classList.remove('active');saveState();renderAll();recalcLocks();showToast('已移出','success');return;
+  }
+  if(card.locked&&!isStash){showToast('上锁，无法移动','error');return;}
+  dragCard=card;dragIsStash=isStash;dragEl=el;dragOrigZ=el.style.zIndex;
+  var t=e.touches[0];dragStartX=t.clientX;dragStartY=t.clientY;
+  if(isStash){
+    var r=el.getBoundingClientRect();dragStartL=r.left;dragStartT=r.top;
+    el.style.position='fixed';el.style.left=r.left+'px';el.style.top=r.top+'px';
+    el.style.width=CARD_W+'px';el.style.height=CARD_H+'px';el.style.zIndex=99999;
+    el.style.pointerEvents='none';
+  }else{
+    dragStartL=parseFloat(el.style.left)||0;dragStartT=parseFloat(el.style.top)||0;
+    el.classList.add('dragging');
+  }
+  document.addEventListener('touchmove',onMove,{passive:false});
+  document.addEventListener('touchend',onUp,{passive:false});
+}
+function onMove(e){
+  if(!dragCard)return;e.preventDefault();
+  var t=e.touches[0];var dx=t.clientX-dragStartX,dy=t.clientY-dragStartY;
+  dragEl.style.left=(dragStartL+dx)+'px';dragEl.style.top=(dragStartT+dy)+'px';
+  // 高亮暂存区
+  var sr=stashWrap.getBoundingClientRect();
+  stashWrap.classList.toggle('highlight',t.clientX>=sr.left&&t.clientX<=sr.right&&t.clientY>=sr.top&&t.clientY<=sr.bottom);
+}
+function onUp(e){
+  if(!dragCard)return;stashWrap.classList.remove('highlight');
+  var t=e.changedTouches[0];var cx=t.clientX,cy=t.clientY;
+  var bcEl=document.getElementById('board-container');
+  var boardRect=board.getBoundingClientRect();
+  var stashRect=stashWrap.getBoundingClientRect();
+  var merged=false;
+  if(dragIsStash){
+    if(cx>=stashRect.left&&cx<=stashRect.right&&cy>=stashRect.top&&cy<=stashRect.bottom){var tg=findStashTgt(dragCard,cx,cy);if(tg){doMerge(dragCard,tg,true,true);merged=true;}}
+    if(!merged&&cx>=boardRect.left&&cx<=boardRect.right&&cy>=boardRect.top&&cy<=boardRect.bottom){var tg2=findBoardFromScreen(dragCard,cx-boardRect.left,cy-boardRect.top);if(tg2){doMerge(dragCard,tg2,true,false);merged=true;}}
+    if(!merged)renderStash();
+  }else{
+    if(cx>=stashRect.left&&cx<=stashRect.right&&cy>=stashRect.top&&cy<=stashRect.bottom){var tg3=findStashTgt(dragCard,cx,cy);if(tg3){doMerge(dragCard,tg3,false,true);merged=true;}}
+    if(!merged){var tg4=findBoardTgt(dragCard);if(tg4){doMerge(dragCard,tg4,false,false);merged=true;}else{dragEl.style.left=((dragCard.pos[0]-1)*UNIT)+'px';dragEl.style.top=((dragCard.pos[1]-1)*UNIT)+'px';}}
+  }
+  cleanDrag();
+}
+function cleanDrag(){
+  if(dragEl){dragEl.classList.remove('dragging');dragEl.style.zIndex=dragOrigZ;dragEl.style.pointerEvents='';}
+  dragCard=null;dragEl=null;dragIsStash=false;dragOrigZ='';
+  document.removeEventListener('touchmove',onMove);document.removeEventListener('touchend',onUp);
+}
+
+function findBoardTgt(dragged){var el=dragged.el;var L=parseFloat(el.style.left)||0,T=parseFloat(el.style.top)||0;var cx=L+CARD_W/2,cy=T+CARD_H/2;var best=null,bestD=Infinity;for(var i=0;i<cardsData.length;i++){var c=cardsData[i];if(c.id===dragged.id||c.locked||c.chain!==dragged.chain||c.level!==dragged.level)continue;var tx=(c.pos[0]-1)*UNIT+CARD_W/2,ty=(c.pos[1]-1)*UNIT+CARD_H/2;var d=Math.hypot(cx-tx,cy-ty);if(d<=UNIT*2.2&&d<bestD){bestD=d;best=c;}}return best;}
+function findBoardFromScreen(dragged,bx,by){var best=null,bestD=Infinity;for(var i=0;i<cardsData.length;i++){var c=cardsData[i];if(c.locked||c.chain!==dragged.chain||c.level!==dragged.level)continue;var tx=(c.pos[0]-1)*UNIT+CARD_W/2,ty=(c.pos[1]-1)*UNIT+CARD_H/2;var d=Math.hypot(bx-tx,by-ty);if(d<=UNIT*2.5&&d<bestD){bestD=d;best=c;}}return best;}
+function findStashTgt(dragged,cx,cy){for(var i=0;i<stashCards.length;i++){var c=stashCards[i];if(c.id===dragged.id||c.chain!==dragged.chain||c.level!==dragged.level)continue;var r=c.el.getBoundingClientRect();if(Math.hypot(cx-(r.left+r.width/2),cy-(r.top+r.height/2))<55)return c;}return null;}
+
+function doMerge(src,tgt,srcS,tgtS){
+  saveState();
+  if(srcS)stashCards=stashCards.filter(function(c){return c.id!==src.id});else cardsData=cardsData.filter(function(c){return c.id!==src.id});
+  tgt.level+=1;var max=CHAINS[tgt.chain];
+  if(tgt.level>=max){
+    var el=tgt.el;if(el){
+      el.innerHTML=buildCardHTML(tgt.chain,tgt.level);el.classList.add('max-level-glow');
+      if(tgtS){setTimeout(function(){stashCards=stashCards.filter(function(c){return c.id!==tgt.id});progress++;showToast(tgt.chain+'链满级！','success');updateProgress();renderAll();recalcLocks();checkWin();},600);}
+      else{if(src.el&&src.el.parentNode)src.el.parentNode.removeChild(src.el);setTimeout(function(){el.classList.remove('max-level-glow');el.classList.add('flying');setTimeout(function(){cardsData=cardsData.filter(function(c){return c.id!==tgt.id});progress++;showToast(tgt.chain+'链满级！','success');updateProgress();renderAll();recalcLocks();checkWin();},900);},600);}
+      return;}}
+  showToast('合成 '+icon(tgt.chain,tgt.level)+' Lv.'+tgt.level,'success');renderAll();recalcLocks();
+}
+
+function useUndo(){if(historyStack.length<=1){showToast('无法撤回','error');return;}historyStack.pop();var s=historyStack[historyStack.length-1];cardsData=JSON.parse(s.cards);stashCards=JSON.parse(s.stash);progress=s.progress;cardsData.forEach(function(c){c.el=null;});stashCards.forEach(function(c){c.el=null;});renderAll();recalcLocks();showToast('已撤回','success');}
+function useRemove(){if(toolMode==='remove'){toolMode=null;document.getElementById('btn-remove').classList.remove('active');}else{toolMode='remove';document.getElementById('btn-remove').classList.add('active');showToast('点击未上锁的牌移出','success');}}
+function useShuffle(){saveState();var pos=cardsData.map(function(c){return[c.pos[0],c.pos[1],c.pos[2]];});var ids=cardsData.map(function(c){return{chain:c.chain,level:c.level};});for(var i=ids.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=ids[i];ids[i]=ids[j];ids[j]=t;}pos.sort(function(a,b){return b[2]-a[2]||(a[1]-b[1])||(a[0]-b[0]);});ids.sort(function(a,b){return a.level-b.level;});cardsData.forEach(function(c,i){if(ids[i]){c.chain=ids[i].chain;c.level=ids[i].level;c.pos=[pos[i][0],pos[i][1],pos[i][2]];}});renderAll();recalcLocks();showToast('已打乱','success');}
+
+function saveState(){historyStack.push({cards:JSON.stringify(cardsData.map(function(c){return{id:c.id,pos:c.pos,chain:c.chain,level:c.level};})),stash:JSON.stringify(stashCards.map(function(c){return{id:c.id,pos:c.pos,chain:c.chain,level:c.level};})),progress:progress});if(historyStack.length>30)historyStack.shift();}
+function updateProgress(){var total=Object.keys(CHAINS).length;document.getElementById('progress-text').textContent=progress+'/'+total;document.getElementById('progress-bar').style.width=(progress/total*100)+'%';}
+function checkWin(){
+  if(progress>=Object.keys(CHAINS).length){
+    if(typeof currentLevel==='number'&&currentLevel<TOTAL_LEVELS)unlocked[currentLevel+1]=true;
+    setTimeout(function(){
+      var btns;
+      if(typeof currentLevel==='number'&&currentLevel<TOTAL_LEVELS){btns=[{text:'下一关',cls:'btn-primary',fn:function(){hideModal();startLevel(currentLevel+1);}},{text:'选关',cls:'btn-secondary',fn:function(){hideModal();showMenu();}}];}
+      else{btns=[{text:'再玩一次',cls:'btn-primary',fn:function(){hideModal();startLevel(currentLevel);}},{text:'主页',cls:'btn-secondary',fn:function(){hideModal();showHome();}}];}
+      showModal('🎉 恭喜通关！','你已完成'+LEVELS[currentLevel].name,btns);
+    },500);
+  }
+}
+function showModal(title,text,btns){document.getElementById('modal-title').textContent=title;document.getElementById('modal-text').textContent=text;var bc=document.getElementById('modal-btns');bc.innerHTML='';btns.forEach(function(b){var btn=document.createElement('button');btn.className='modal-btn '+b.cls;btn.textContent=b.text;btn.onclick=b.fn;bc.appendChild(btn);});document.getElementById('modal').classList.add('show');}
+function hideModal(){document.getElementById('modal').classList.remove('show');}
+var tt;
+function showToast(msg,type){toastEl.textContent=msg;toastEl.className=type||'';toastEl.classList.add('show');clearTimeout(tt);tt=setTimeout(function(){toastEl.classList.remove('show');},1500);}
+
+// 攻略
+function toggleHint(){guideMode=!guideMode;document.getElementById('btn-hint').classList.toggle('active',guideMode);if(guideMode){showHint();}else{clearHints();showToast('攻略已关闭','success');}}
+function showHint(){clearHints();var cfg=LEVELS[currentLevel];if(!cfg||!cfg.guide){showToast('本关无攻略','error');return;}if(guideStep>=cfg.guide.length){showToast('攻略完成！','success');return;}var step=cfg.guide[guideStep];var src=null,tgt=null;for(var i=0;i<cardsData.length;i++){var c=cardsData[i];if(!src&&c.chain===step.chain&&c.level===step.level&&c.pos[0]===step.src[0]&&c.pos[1]===step.src[1]&&c.pos[2]===step.src[2])src=c;if(!tgt&&c.chain===step.chain&&c.level===step.level&&c.pos[0]===step.tgt[0]&&c.pos[1]===step.tgt[1]&&c.pos[2]===step.tgt[2])tgt=c;}if(!src||!tgt){guideStep++;if(guideStep<cfg.guide.length)showHint();else showToast('攻略完成','success');return;}if(src.el)src.el.classList.add('hint-src');if(tgt.el)tgt.el.classList.add('hint-tgt');showToast('拖 '+icon(step.chain,step.level)+' → '+icon(step.chain,step.level)+' 合成','success');}
+function clearHints(){document.querySelectorAll('.hint-src,.hint-tgt').forEach(function(el){el.classList.remove('hint-src','hint-tgt');});}
+var origDoMerge=doMerge;
+doMerge=function(src,tgt,ss,ts){origDoMerge(src,tgt,ss,ts);if(guideMode){guideStep++;setTimeout(showHint,1200);}};
+
+// URL 自定义关卡
+(function(){
+  var params=new URLSearchParams(window.location.search);
+  var b64=params.get('level');if(!b64)return;
+  try{
+    var json=decodeURIComponent(escape(atob(b64)));
+    var cfg=JSON.parse(json);if(!cfg.chains||!cfg.cards)return;
+    var mx=0,my=0;cfg.cards.forEach(function(c){mx=Math.max(mx,c.pos[0]);my=Math.max(my,c.pos[1]);});
+    LEVELS['custom']={name:'自定义关卡',diff:'挑战',diffCls:'diff-hard',icon:'🔗',chains:cfg.chains,boardW:mx+3,boardH:my+3,unit:36,desc:'链数:'+Object.keys(cfg.chains).length+' · '+cfg.cards.length+'张',cards:cfg.cards};
+    document.getElementById('custom-level-card').style.display='block';
+    document.getElementById('custom-level-desc').textContent=LEVELS['custom'].desc;
+    setTimeout(showMenu,600);
+  }catch(e){}
+})();
+</script>
+</body>
+</html>
