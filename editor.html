@@ -66,7 +66,7 @@ canvas{display:block;cursor:crosshair}
   <input class="init-input" id="max-level" type="number" min="2" max="8" value="4">
   <button class="top-btn" id="btn-confirm" onclick="initChains()">确认生成</button>
   <button class="top-btn" id="btn-reset" onclick="resetEditor()">重置</button>
-  <button class="top-btn" id="btn-play" onclick="startPlaytest()">▶ 试玩</button><button class="top-btn" id="btn-undo-split" onclick="undoSplit()" disabled style="background:linear-gradient(180deg,#9b59b6,#8e44ad);color:#fff;opacity:.4;cursor:not-allowed">↩ 撤销分割</button>
+  <button class="top-btn" id="btn-play" onclick="startPlaytest()">▶ 试玩</button><button class="top-btn" id="btn-undo-split" onclick="undoSplit()" disabled style="background:linear-gradient(180deg,#9b59b6,#8e44ad);color:#fff;opacity:.4;cursor:not-allowed">↩ 撤销分割</button><button class="top-btn" onclick="shareLevel()" style="background:linear-gradient(180deg,#3498db,#2980b9);color:#fff">🔗 一键分享</button>
   <span id="chain-names-row" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"></span>
 </div>
 <div id="main">
@@ -106,11 +106,11 @@ canvas{display:block;cursor:crosshair}
       <div id="pt-bar-wrap"><div id="pt-bar"></div></div>
       <button onclick="closePlaytest()" style="margin-left:auto;padding:6px 16px;border:1px solid #666;background:rgba(255,255,255,.1);color:#fff;border-radius:8px;cursor:pointer;font-size:13px">× 关闭</button>
     </div>
-    <div id="pt-board"></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:4px 0"><button onclick="ptUndo()" id="pt-undo" style="padding:6px 14px;border:none;border-radius:8px;background:linear-gradient(180deg,#f39c12,#e67e22);color:#fff;font-size:12px;font-weight:bold;cursor:pointer">↩ 撤回</button><button onclick="ptRemoveMode()" id="pt-remove" style="padding:6px 14px;border:none;border-radius:8px;background:linear-gradient(180deg,#f39c12,#e67e22);color:#fff;font-size:12px;font-weight:bold;cursor:pointer">📤 移出</button><button onclick="ptShuffle()" style="padding:6px 14px;border:none;border-radius:8px;background:linear-gradient(180deg,#f39c12,#e67e22);color:#fff;font-size:12px;font-weight:bold;cursor:pointer">🔀 打乱</button><span style="color:#888;font-size:11px;margin-left:4px">暂存区(5):</span><div id="pt-stash" style="display:flex;gap:4px;align-items:center;background:rgba(255,255,255,.07);padding:4px 8px;border-radius:8px;min-width:60px;min-height:36px;border:1px dashed rgba(255,255,255,.2)"></div></div><div id="pt-board"></div>
   </div>
 </div>
 <script>
-const CELL=48,COLS=8,ROWS=12,CW=CELL*2,CH=Math.round(CELL*2.4);
+const CELL=44,COLS=12,ROWS=18,CW=CELL*2,CH=Math.round(CELL*2.4);
 const ICONS={A:['🌱','🌿','🍀','☘️','🌳','🌲','🎄','🏔️'],B:['💧','🫧','🌊','❄️','🧊','💎','🔮','👑'],C:['🍎','🍊','🍋','🍇','🍒','🍓','🍰','🎂'],D:['⭐','🌟','✨','💫','🔥','☀️','🌈','🎆'],E:['🐣','🐥','🐤','🐓','🦅','🦉','🦚','🐉'],F:['🪨','🧱','🏠','🏡','🏰','🏯','🗼','🌆'],G:['🌸','🌺','🌹','💐','🌷','🏵️','🌻','🌼'],H:['🍄','🌰','🍑','🧁','🎵','🎸','🎺','🎻']};
 const CN='ABCDEFGH';
 const CC={A:'#e74c3c',B:'#3498db',C:'#2ecc71',D:'#9b59b6',E:'#e67e22',F:'#1abc9c',G:'#e91e63',H:'#ff9800'};
@@ -346,18 +346,28 @@ let tt;
 function showToast(msg,type){const el=document.getElementById('toast');el.textContent=msg;el.className=type||'';el.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>el.classList.remove('show'),2200);}
 
 /* ======== PLAYTEST ======== */
-const PT=44;let ptCards=[],ptProgress=0,ptChains={};
+const PT=44;let ptCards=[],ptProgress=0,ptChains={},ptStash=[],ptHistory=[];
 let ptDragCard=null,ptDragEl=null,ptSX=0,ptSY=0,ptOL=0,ptOT=0,ptOZ='';
 
 function startPlaytest(){
   if(staging.length>0){showToast('待放入区块还有牌，请先全部放入棋盘','err');return;}
+  if(placed.length===0){showToast('棋盘上没有牌','err');return;}
+  // 检查满级牌
+  var maxCards=placed.filter(function(c){return c.level>=(chains[c.chain]||0);});
+  if(maxCards.length>0){showToast('棋盘上存在满级卡牌（'+maxCards[0].chain+' Lv.'+maxCards[0].level+'），请先分割','err');return;}
+  ptChains=Object.assign({},chains);ptProgress=0;
+  var pid=1;ptCards=placed.map(function(c){return{id:pid++,pos:[c.pos[0],c.pos[1],c.pos[2]],chain:c.chain,level:c.level,el:null,locked:false};});
+  ptStash=[];
+  document.getElementById('play-panel').classList.add('show');
+  ptRender();ptLocks();ptUpd();
+}
   if(placed.length===0){showToast('棋盘上没有牌','err');return;}
   ptChains=Object.assign({},chains);ptProgress=0;
   let pid=1;ptCards=placed.map(c=>({id:pid++,pos:[c.pos[0],c.pos[1],c.pos[2]],chain:c.chain,level:c.level,el:null,locked:false}));
   document.getElementById('play-panel').classList.add('show');
   ptRender();ptLocks();ptUpd();
 }
-function closePlaytest(){document.getElementById('play-panel').classList.remove('show');document.getElementById('pt-board').innerHTML='';ptCards=[];}
+function closePlaytest(){document.getElementById('play-panel').classList.remove('show');document.getElementById('pt-board').innerHTML='';var s=document.getElementById('pt-stash');if(s)s.innerHTML='';ptCards=[];ptStash=[];ptHistory=[];ptRemMode=false;}
 
 function ptCW(){return PT*2-4;}function ptCH(){return Math.round(PT*2.4);}
 function ptSz(){let mx=0,my=0;ptCards.forEach(c=>{mx=Math.max(mx,c.pos[0]);my=Math.max(my,c.pos[1]);});return[mx+3,my+3];}
@@ -390,6 +400,15 @@ function ptDown(e){
   e.preventDefault();if(e.button!==0)return;
   const card=ptCards.find(c=>c.id===Number(e.currentTarget.dataset.id));
   if(!card||card.locked)return;
+  if(ptRemMode){
+    if(ptStash.length>=5){showToast('\u6682\u5b58\u533a\u5df2\u6ee1','err');return;}
+    ptSaveHistory();
+    ptCards=ptCards.filter(function(c){return c.id!==card.id;});
+    if(card.el&&card.el.parentNode)card.el.parentNode.removeChild(card.el);
+    ptStash.push({id:card.id,pos:[...card.pos],chain:card.chain,level:card.level,el:null});
+    ptRemMode=false;document.getElementById('pt-remove').style.background='linear-gradient(180deg,#f39c12,#e67e22)';
+    ptRenderStash();ptLocks();return;
+  }
   ptDragCard=card;ptDragEl=e.currentTarget;ptOZ=ptDragEl.style.zIndex;
   ptSX=e.clientX;ptSY=e.clientY;ptOL=parseFloat(ptDragEl.style.left)||0;ptOT=parseFloat(ptDragEl.style.top)||0;
   ptDragEl.style.zIndex='99999';ptDragEl.style.cursor='grabbing';ptDragEl.style.transform='scale(1.08) rotate(1deg)';
@@ -406,7 +425,7 @@ function ptUp(e){
     const d=Math.hypot(cx-(c.pos[0]-1)*PT-cw/2,cy-(c.pos[1]-1)*PT-ch/2);
     if(d<=PT*2&&d<bestD){bestD=d;best=c;}
   }
-  if(best)ptMerge(ptDragCard,best);
+  if(best){ptSaveHistory();ptMerge(ptDragCard,best);}
   else{ptDragEl.style.left=(ptDragCard.pos[0]-1)*PT+'px';ptDragEl.style.top=(ptDragCard.pos[1]-1)*PT+'px';ptDragEl.style.zIndex=ptOZ;}
   ptDragCard=null;ptDragEl=null;document.removeEventListener('mousemove',ptMove);document.removeEventListener('mouseup',ptUp);
 }
@@ -430,6 +449,110 @@ function ptMerge(src,tgt){
 }
 
 renderBoard();
+
+/* ======== PT TOOLS ======== */
+var ptRemMode=false;
+
+function ptSaveHistory(){
+  ptHistory.push({cards:JSON.stringify(ptCards.map(function(c){return{id:c.id,pos:[...c.pos],chain:c.chain,level:c.level};})),stash:JSON.stringify(ptStash.map(function(c){return{id:c.id,pos:[...c.pos],chain:c.chain,level:c.level};})),progress:ptProgress});
+  if(ptHistory.length>30)ptHistory.shift();
+}
+
+function ptUndo(){
+  if(ptHistory.length===0){alert('没有可撤回的操作');return;}
+  var snap=ptHistory.pop();
+  var pid=1;
+  ptCards=JSON.parse(snap.cards).map(function(c){return{id:c.id,pos:c.pos,chain:c.chain,level:c.level,el:null,locked:false};});
+  ptStash=JSON.parse(snap.stash).map(function(c){return{id:c.id,pos:c.pos,chain:c.chain,level:c.level,el:null};});
+  ptProgress=snap.progress;
+  ptRemMode=false;
+  document.getElementById('pt-remove').style.background='linear-gradient(180deg,#f39c12,#e67e22)';
+  ptRender();ptRenderStash();ptLocks();ptUpd();
+}
+
+function ptRemoveMode(){
+  ptRemMode=!ptRemMode;
+  document.getElementById('pt-remove').style.background=ptRemMode?'linear-gradient(180deg,#e74c3c,#c0392b)':'linear-gradient(180deg,#f39c12,#e67e22)';
+  if(ptRemMode)showToast('点击一张未上锁的牌移入暂存区','ok');
+  else showToast('已退出移出模式','ok');
+}
+
+function ptShuffle(){
+  ptSaveHistory();
+  var positions=ptCards.map(function(c){return[c.pos[0],c.pos[1],c.pos[2]];});
+  var ids=ptCards.map(function(c){return{chain:c.chain,level:c.level};});
+  ids.sort(function(a,b){return a.level-b.level;});
+  for(var i=positions.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var tmp=positions[i];positions[i]=positions[j];positions[j]=tmp;}
+  positions.sort(function(a,b){return b[2]-a[2]||Math.random()-.5;});
+  ptCards.forEach(function(c,i){if(ids[i]){c.chain=ids[i].chain;c.level=ids[i].level;c.pos=[positions[i][0],positions[i][1],positions[i][2]];}});
+  ptRender();ptLocks();showToast('已打乱','ok');
+}
+
+function ptRenderStash(){
+  var div=document.getElementById('pt-stash');
+  if(!div)return;
+  div.innerHTML='';
+  ptStash.forEach(function(card){
+    var el=document.createElement('div');
+    var col=CC[card.chain]||'#888',dk=CD[card.chain]||'#555';
+    var ica=ICONS[card.chain]||[card.chain],ico=ica[Math.min(card.level-1,ica.length-1)];
+    Object.assign(el.style,{width:'36px',height:'44px',borderRadius:'5px',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',background:'linear-gradient(135deg,#fafafa,#e8e8e8)',borderLeft:'3px solid '+col,borderBottom:'4px solid '+dk,borderTop:'1px solid rgba(255,255,255,.4)',borderRight:'1px solid rgba(255,255,255,.4)',fontSize:'14px',cursor:'grab',userSelect:'none'});
+    el.innerHTML='<span>'+ico+'</span><span style="font-size:8px;color:#666">LV'+card.level+'</span>';
+    // allow stash cards to merge with board
+    el.addEventListener('mousedown',function(ev){
+      ev.preventDefault();if(ev.button!==0)return;
+      // start drag from stash
+      ptDragCard={id:card.id,chain:card.chain,level:card.level,pos:card.pos,fromStash:true};
+      ptStash=ptStash.filter(function(c){return c.id!==card.id;});
+      ptRenderStash();
+      // create ghost
+      ptDragEl=document.createElement('div');
+      Object.assign(ptDragEl.style,{position:'fixed',zIndex:'99999',pointerEvents:'none',width:'36px',height:'44px',borderRadius:'5px',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',background:'linear-gradient(135deg,#fafafa,#e8e8e8)',borderLeft:'3px solid '+col,borderBottom:'4px solid '+dk,opacity:'.85',left:ev.clientX-18+'px',top:ev.clientY-22+'px'});
+      ptDragEl.innerHTML='<span style="font-size:14px">'+ico+'</span>';
+      document.body.appendChild(ptDragEl);
+      ptSX=ev.clientX;ptSY=ev.clientY;ptOL=ev.clientX-18;ptOT=ev.clientY-22;ptOZ='';
+      document.addEventListener('mousemove',ptStashMove);document.addEventListener('mouseup',ptStashUp);
+    });
+    div.appendChild(el);
+    card.el=el;
+  });
+}
+
+function ptStashMove(e){if(ptDragEl){ptDragEl.style.left=ptOL+(e.clientX-ptSX)+'px';ptDragEl.style.top=ptOT+(e.clientY-ptSY)+'px';}}
+function ptStashUp(e){
+  if(!ptDragCard)return;
+  if(ptDragEl&&ptDragEl.parentNode)ptDragEl.parentNode.removeChild(ptDragEl);ptDragEl=null;
+  // find merge target on board
+  var cw=ptCW(),ch=ptCH(),cx=ptOL+(e.clientX-ptSX)+18,cy=ptOT+(e.clientY-ptSY)+22;
+  var board=document.getElementById('pt-board'),br=board.getBoundingClientRect();
+  var bx=e.clientX-br.left,by=e.clientY-br.top;
+  var best=null,bestD=Infinity;
+  for(var i=0;i<ptCards.length;i++){
+    var c=ptCards[i];if(c.locked||c.chain!==ptDragCard.chain||c.level!==ptDragCard.level)continue;
+    var d=Math.hypot(bx-(c.pos[0]-1)*PT-cw/2,by-(c.pos[1]-1)*PT-ch/2);
+    if(d<=PT*2&&d<bestD){bestD=d;best=c;}
+  }
+  if(best){ptSaveHistory();ptMerge(ptDragCard,best);}
+  else{ptStash.push(ptDragCard);ptRenderStash();}
+  ptDragCard=null;
+  document.removeEventListener('mousemove',ptStashMove);document.removeEventListener('mouseup',ptStashUp);
+}
+
+/* ======== SHARE ======== */
+function shareLevel(){
+  if(placed.length===0){showToast('棋盘上没有牌','err');return;}
+  // Check max-level cards
+  var maxCards=placed.filter(function(c){return c.level>=(chains[c.chain]||0);});
+  if(maxCards.length>0){showToast('存在满级卡牌，无法分享','err');return;}
+  var cfg={chains:chains,cards:placed.map(function(c){return{pos:[c.pos[0],c.pos[1],c.pos[2]],chain:c.chain,level:c.level};})};
+  var json=JSON.stringify(cfg);
+  var b64=btoa(unescape(encodeURIComponent(json)));
+  var url='https://wzimeng.github.io/card-merge-game/?level='+encodeURIComponent(b64);
+  navigator.clipboard.writeText(url).then(function(){showToast('分享链接已复制到剪贴板！','ok');}).catch(function(){
+    var t=document.createElement('textarea');t.value=url;document.body.appendChild(t);t.select();document.execCommand('copy');t.remove();showToast('分享链接已复制！','ok');
+  });
+}
+
 </script>
 </body>
 </html>

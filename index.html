@@ -115,7 +115,7 @@ body{font-family:'Microsoft YaHei','PingFang SC',sans-serif;overflow:hidden;touc
 <div id="menu" class="hidden">
   <h1>选择关卡</h1><p>通关后解锁下一关</p>
   <div class="level-list" id="level-list"></div>
-  <button class="back-home-btn" onclick="showHome()">返回主页</button>
+  <div id="custom-level-card" style="display:none;margin-top:16px"><div class="level-card" onclick="startLevel('custom')" style="width:220px;border-color:#ffd700"><h3 style="color:#ffd700">🔗 自定义关卡</h3><div class="lc-info" id="custom-level-desc">由玩家分享</div><span class="lc-diff" style="background:#3498db;color:#fff">挑战</span></div></div><button class="back-home-btn" onclick="showHome()">返回主页</button>
 </div>
 <div id="header" class="hidden"><div id="level-badge" onclick="backToMenu()">← 选关</div><span id="progress-text">进度: 0/3</span><div id="progress-container"><div id="progress-bar"></div></div></div>
 <div id="board-container" class="hidden"><div id="board"></div></div>
@@ -275,7 +275,7 @@ function renderLevelList(){var ll=document.getElementById('level-list');ll.inner
 function backToMenu(){showMenu()}
 
 function startLevel(num){
-  var cfg=LEVELS[num];currentLevel=num;CHAINS=cfg.chains;UNIT=cfg.unit;
+  var cfg=LEVELS[num];if(!cfg){showToast('关卡不存在','err');return;}currentLevel=num;CHAINS=cfg.chains;UNIT=cfg.unit;
   CARD_W=UNIT*2-4;CARD_H=UNIT*2.4;
   var bc=document.getElementById('board-container');
   bc.style.width=(cfg.boardW*UNIT+16)+'px';bc.style.height=(cfg.boardH*UNIT+16)+'px';
@@ -348,7 +348,7 @@ function useShuffle(){saveState();var positions=cardsData.map(function(c){return
 
 function saveState(){historyStack.push({cards:JSON.stringify(cardsData.map(function(c){return{id:c.id,pos:c.pos,chain:c.chain,level:c.level}})),stash:JSON.stringify(stashCards.map(function(c){return{id:c.id,pos:c.pos,chain:c.chain,level:c.level}})),progress:progress});if(historyStack.length>30)historyStack.shift()}
 function updateProgress(){var total=Object.keys(CHAINS).length;document.getElementById('progress-text').textContent='进度: '+progress+'/'+total;document.getElementById('progress-bar').style.width=(progress/total*100)+'%'}
-function checkWin(){if(progress>=Object.keys(CHAINS).length){if(currentLevel<TOTAL_LEVELS)unlocked[currentLevel+1]=true;setTimeout(function(){var btns;if(currentLevel<TOTAL_LEVELS){btns=[{text:'下一关',cls:'btn-primary',fn:function(){hideModal();startLevel(currentLevel+1)}},{text:'返回选关',cls:'btn-secondary',fn:function(){hideModal();showMenu()}}]}else{btns=[{text:'再玩一次',cls:'btn-primary',fn:function(){hideModal();startLevel(currentLevel)}},{text:'返回主页',cls:'btn-secondary',fn:function(){hideModal();showHome()}}]}showModal('🎉 恭喜通关！','你已完成'+LEVELS[currentLevel].name,btns)},500)}}
+function checkWin(){if(progress>=Object.keys(CHAINS).length){if(typeof currentLevel==='number'&&currentLevel<TOTAL_LEVELS)unlocked[currentLevel+1]=true;setTimeout(function(){var btns;if(typeof currentLevel==='number'&&currentLevel<TOTAL_LEVELS){btns=[{text:'下一关',cls:'btn-primary',fn:function(){hideModal();startLevel(currentLevel+1)}},{text:'返回选关',cls:'btn-secondary',fn:function(){hideModal();showMenu()}}]}else{btns=[{text:'再玩一次',cls:'btn-primary',fn:function(){hideModal();startLevel(currentLevel)}},{text:'返回主页',cls:'btn-secondary',fn:function(){hideModal();showHome()}}]}showModal('🎉 恭喜通关！','你已完成'+LEVELS[currentLevel].name,btns)},500)}}
 function showModal(title,text,btns){document.getElementById('modal-title').textContent=title;document.getElementById('modal-text').textContent=text;var bc=document.getElementById('modal-btns');bc.innerHTML='';btns.forEach(function(b){var btn=document.createElement('button');btn.className='modal-btn '+b.cls;btn.textContent=b.text;btn.onclick=b.fn;bc.appendChild(btn)});document.getElementById('modal').classList.add('show')}
 function hideModal(){document.getElementById('modal').classList.remove('show')}
 function showToast(msg,type){toastEl.textContent=msg;toastEl.className=type||'';toastEl.classList.add('show');setTimeout(function(){toastEl.classList.remove('show')},1500)}
@@ -392,6 +392,38 @@ doMerge=function(src,tgt,ss,ts){
   origDoMerge(src,tgt,ss,ts);
   if(guideMode){guideStep++;setTimeout(showHint,1200)}
 };
+
+/* ======== CUSTOM LEVEL FROM URL ======== */
+(function(){
+  var params=new URLSearchParams(window.location.search);
+  var b64=params.get('level');
+  if(!b64)return;
+  try{
+    var json=decodeURIComponent(escape(atob(b64)));
+    var cfg=JSON.parse(json);
+    if(!cfg.chains||!cfg.cards)return;
+    // Register as custom level
+    LEVELS['custom']={
+      name:'自定义关卡',diff:'挑战',diffCls:'diff-hard',
+      chains:cfg.chains,
+      boardW:0,boardH:0,unit:36,
+      desc:'链数: '+Object.keys(cfg.chains).length+' | 满级: '+Object.values(cfg.chains)[0]+'级 | '+cfg.cards.length+'张牌',
+      cards:cfg.cards
+    };
+    // Compute board size from cards
+    var mx=0,my=0;
+    cfg.cards.forEach(function(c){mx=Math.max(mx,c.pos[0]);my=Math.max(my,c.pos[1]);});
+    LEVELS['custom'].boardW=mx+3; LEVELS['custom'].boardH=my+3;
+    // Show custom level card on menu
+    document.getElementById('custom-level-card').style.display='block';
+    document.getElementById('custom-level-desc').textContent=LEVELS['custom'].desc;
+    // Auto-start if on home
+    showToast && showToast('检测到分享关卡，进入选关页面查看','ok');
+    // Show menu automatically
+    setTimeout(function(){if(document.getElementById('home')&&!document.getElementById('home').classList.contains('hidden')){showMenu();}},800);
+  }catch(e){console.warn('Custom level parse error:',e);}
+})();
+
 </script>
 </body>
 </html>
