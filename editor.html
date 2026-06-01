@@ -306,7 +306,29 @@ document.addEventListener('mouseup',function(e){
     held=null;ghostHide();hideHint();sa.classList.remove('dov');renderConfig();updateBtns();
     return;
   }
-  // 非待放入区松手：分割新牌取消
+  // 检查是否在棋盘上松手 → 放置卡牌
+  var cvEl=document.getElementById('cv');
+  var cvR=cvEl.getBoundingClientRect();
+  var bx=e.clientX-cvR.left,by=e.clientY-cvR.top;
+  if(bx>=0&&bx<=cvEl.offsetWidth&&by>=0&&by<=cvEl.offsetHeight){
+    var gx=Math.round(bx/CELL),gy=Math.round(by/CELL);
+    if(!canPlace(gx,gy)){
+      showToast('无法放置：位置在禁区内','err');
+      if(held.parentId&&!held.fromBoard)cancelNewCard();
+      else{held=null;ghostHide();hideHint();sa.classList.remove('dov');renderConfig();updateBtns();}
+      return;
+    }
+    var z=calcZ(gx,gy,null);
+    placed.push({id:held.id,pos:[gx,gy,z],chain:held.chain,level:held.level,parentId:held.parentId||null,childIds:(held.childIds||[]).slice()});
+    if(held.parentId){
+      var par=placed.find(function(c){return c.id===held.parentId;});
+      if(par){par.childIds=par.childIds||[];if(par.childIds.indexOf(held.id)<0)par.childIds.push(held.id);}
+    }
+    held=null;ghostHide();hideHint();sa.classList.remove('dov');
+    renderBoard();renderConfig();updateBtns();
+    return;
+  }
+  // 既不在棋盘也不在待放入区：分割新牌取消，其余丢弃
   if(held.parentId&&!held.fromBoard)cancelNewCard();
   else{held=null;ghostHide();hideHint();sa.classList.remove('dov');renderConfig();updateBtns();}
 });
